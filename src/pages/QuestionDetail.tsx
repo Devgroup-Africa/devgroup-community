@@ -159,8 +159,8 @@ function renderBody(text: string) {
     if (part.startsWith("```")) {
       const code = part.replace(/```\w*\n?/, "").replace(/```$/, "");
       return (
-        <pre key={i} className="my-3 overflow-x-auto rounded-md bg-code p-3 text-xs font-mono text-primary/90 border border-border">
-          <code>{code.trim()}</code>
+        <pre key={i} className="my-3 overflow-x-auto rounded-md bg-code p-3 text-xs font-mono border border-border">
+          <code className="!bg-transparent !p-0">{code.trim()}</code>
         </pre>
       );
     }
