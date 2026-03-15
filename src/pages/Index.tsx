@@ -1,36 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { questions, allTags } from "@/data/mockData";
 import QuestionCard from "@/components/QuestionCard";
 import Layout from "@/components/Layout";
-import { Filter, Flame, Clock, TrendingUp } from "lucide-react";
+import RightSidebar from "@/components/RightSidebar";
+import { Filter, Flame, Clock, TrendingUp, MessageSquare } from "lucide-react";
 
 type SortBy = "votes" | "recent" | "trending";
 
 const Index = () => {
-  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const tagFromUrl = searchParams.get("tag");
+  const searchFromUrl = searchParams.get("search");
+
+  const [activeTag, setActiveTag] = useState<string | null>(tagFromUrl);
   const [sortBy, setSortBy] = useState<SortBy>("votes");
 
-  const filtered = questions
-    .filter((q) => !activeTag || q.tags.includes(activeTag))
-    .sort((a, b) => {
-      if (sortBy === "votes") return b.votes - a.votes;
-      if (sortBy === "trending") return b.views - a.views;
-      return 0; // recent - already in order
-    });
+  useEffect(() => {
+    setActiveTag(tagFromUrl);
+  }, [tagFromUrl]);
 
-  const popularTags = allTags.slice(0, 10);
+  const filtered = useMemo(() => {
+    return questions
+      .filter((q) => !activeTag || q.tags.includes(activeTag))
+      .filter((q) => {
+        if (!searchFromUrl) return true;
+        const search = searchFromUrl.toLowerCase();
+        return (
+          q.title.toLowerCase().includes(search) ||
+          q.body.toLowerCase().includes(search) ||
+          q.tags.some((t) => t.toLowerCase().includes(search)) ||
+          q.author.toLowerCase().includes(search)
+        );
+      })
+      .sort((a, b) => {
+        if (sortBy === "votes") return b.votes - a.votes;
+        if (sortBy === "trending") return b.views - a.views;
+        return 0;
+      });
+  }, [activeTag, searchFromUrl, sortBy]);
+
+  const popularTags = allTags.slice(0, 12);
 
   return (
     <Layout>
       <div className="flex gap-6">
         {/* Sidebar - Tags */}
-        <aside className="hidden lg:block w-56 shrink-0">
+        <aside className="hidden lg:block w-52 shrink-0">
           <div className="sticky top-20">
             <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
               <Filter className="h-3 w-3" />
               Tags populaires
             </h3>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <button
                 onClick={() => setActiveTag(null)}
                 className={`rounded-md px-3 py-1.5 text-left text-sm font-medium transition-colors ${
@@ -39,7 +61,8 @@ const Index = () => {
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
               >
-                Toutes les questions
+                <MessageSquare className="inline h-3.5 w-3.5 mr-1.5" />
+                Toutes
               </button>
               {popularTags.map((tag) => (
                 <button
@@ -62,10 +85,14 @@ const Index = () => {
         {/* Main content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold font-mono text-foreground">
-                {activeTag ? (
+                {searchFromUrl ? (
+                  <>
+                    Résultats pour "<span className="text-primary">{searchFromUrl}</span>"
+                  </>
+                ) : activeTag ? (
                   <>
                     <span className="text-primary">#</span>{activeTag}
                   </>
@@ -79,7 +106,7 @@ const Index = () => {
             </div>
 
             {/* Sort */}
-            <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+            <div className="flex items-center gap-1 rounded-lg bg-muted p-1 self-start">
               {([
                 { key: "votes" as SortBy, icon: Flame, label: "Top" },
                 { key: "recent" as SortBy, icon: Clock, label: "Récent" },
@@ -109,11 +136,16 @@ const Index = () => {
           </div>
 
           {filtered.length === 0 && (
-            <div className="mt-12 text-center">
-              <p className="text-muted-foreground">Aucune question trouvée pour ce filtre.</p>
+            <div className="mt-12 text-center py-12 rounded-lg border border-dashed border-border">
+              <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground font-medium">Aucune question trouvée.</p>
+              <p className="text-sm text-muted-foreground mt-1">Essayez un autre filtre ou une autre recherche.</p>
             </div>
           )}
         </div>
+
+        {/* Right Sidebar */}
+        <RightSidebar />
       </div>
     </Layout>
   );

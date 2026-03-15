@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { allTags } from "@/data/mockData";
-import { X } from "lucide-react";
+import { X, AlertCircle, Info } from "lucide-react";
 
 const AskQuestion = () => {
   const navigate = useNavigate();
@@ -26,9 +26,10 @@ const AskQuestion = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock - just navigate back
     navigate("/");
   };
+
+  const isValid = title.trim().length >= 15 && body.trim().length >= 30 && selectedTags.length >= 1;
 
   return (
     <Layout>
@@ -39,6 +40,20 @@ const AskQuestion = () => {
         <p className="text-sm text-muted-foreground mb-6">
           Décrivez votre problème clairement pour obtenir les meilleures réponses.
         </p>
+
+        {/* Guidelines */}
+        <div className="rounded-lg border border-border bg-primary/5 p-4 mb-6">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
+            <Info className="h-4 w-4 text-primary" />
+            Comment poser une bonne question
+          </h3>
+          <ul className="text-xs text-muted-foreground space-y-1.5 ml-5 list-disc">
+            <li>Résumez le problème dans le titre (min. 15 caractères)</li>
+            <li>Décrivez en détail ce que vous avez essayé (min. 30 caractères)</li>
+            <li>Incluez des blocs de code avec la syntaxe Markdown</li>
+            <li>Ajoutez entre 1 et 5 tags pertinents</li>
+          </ul>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
@@ -54,6 +69,12 @@ const AskQuestion = () => {
               className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
               required
             />
+            {title.length > 0 && title.length < 15 && (
+              <p className="text-[10px] text-destructive mt-1 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                Le titre doit contenir au moins 15 caractères ({title.length}/15)
+              </p>
+            )}
           </div>
 
           {/* Body */}
@@ -64,16 +85,22 @@ const AskQuestion = () => {
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Décrivez votre problème en détail. Utilisez du Markdown et des blocs de code..."
+              placeholder="Décrivez votre problème en détail. Utilisez du Markdown et des blocs de code ```"
               className="w-full h-48 rounded-md border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y transition-colors font-mono"
               required
             />
+            {body.length > 0 && body.length < 30 && (
+              <p className="text-[10px] text-destructive mt-1 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                La description doit contenir au moins 30 caractères ({body.length}/30)
+              </p>
+            )}
           </div>
 
           {/* Tags */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Tags <span className="text-muted-foreground font-normal">(max 5)</span>
+              Tags <span className="text-muted-foreground font-normal">(1-5 tags)</span>
             </label>
 
             {selectedTags.length > 0 && (
@@ -101,7 +128,7 @@ const AskQuestion = () => {
             />
 
             {tagSearch && filteredTags.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
+              <div className="mt-1 flex flex-wrap gap-1 p-2 rounded-md border border-border bg-card">
                 {filteredTags.slice(0, 8).map((tag) => (
                   <button
                     key={tag}
@@ -120,7 +147,8 @@ const AskQuestion = () => {
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
-              className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors animate-pulse-glow"
+              disabled={!isValid}
+              className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Publier la question
             </button>
