@@ -10,6 +10,15 @@ import "highlight.js/styles/github-dark.css";
 const QuestionDetail = () => {
   const { id } = useParams();
   const question = questions.find((q) => q.id === id);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.querySelectorAll("pre code").forEach((block) => {
+        hljs.highlightElement(block as HTMLElement);
+      });
+    }
+  });
 
   if (!question) {
     return (
