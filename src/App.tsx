@@ -7,6 +7,8 @@ import Index from "./pages/Index.tsx";
 import QuestionDetail from "./pages/QuestionDetail.tsx";
 import AskQuestion from "./pages/AskQuestion.tsx";
 import Tags from "./pages/Tags.tsx";
+import Users from "./pages/Users.tsx";
+import UserProfile from "./pages/UserProfile.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/question/:id" element={<QuestionDetail />} />
           <Route path="/ask" element={<AskQuestion />} />
           <Route path="/tags" element={<Tags />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/user/:id" element={<UserProfile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
