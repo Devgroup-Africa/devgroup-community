@@ -35,7 +35,7 @@ const QuestionDetail = () => {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto" ref={contentRef}>
         {/* Back */}
         <Link
           to="/"
