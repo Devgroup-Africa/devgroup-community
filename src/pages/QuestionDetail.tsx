@@ -1,8 +1,11 @@
 import { useParams, Link } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import { questions } from "@/data/mockData";
 import Layout from "@/components/Layout";
 import VoteButton from "@/components/VoteButton";
 import { CheckCircle2, ArrowLeft, Eye } from "lucide-react";
+import hljs from "highlight.js";
+import "highlight.js/styles/github-dark.css";
 
 const QuestionDetail = () => {
   const { id } = useParams();
