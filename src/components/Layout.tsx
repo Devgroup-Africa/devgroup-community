@@ -1,16 +1,19 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Code2, MessageSquare, Plus, Search, TrendingUp, Users, Menu, X } from "lucide-react";
+import { Code2, MessageSquare, Plus, Search, TrendingUp, Users, Menu, X, LogOut, LogIn, User as UserIcon } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
+    setUserMenuOpen(false);
   }, [location.pathname]);
 
   const handleSearch = useCallback((e: React.FormEvent) => {
@@ -22,6 +25,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [searchQuery, navigate]);
 
+  const handleAsk = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      navigate("/auth");
+    }
+  };
+
   const navLinks = [
     { to: "/", icon: MessageSquare, label: "Questions", match: "/" },
     { to: "/tags", icon: TrendingUp, label: "Tags", match: "/tags" },
@@ -30,7 +40,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-xl">
         <div className="container flex h-14 items-center gap-3">
           <Link to="/" className="flex items-center gap-2 shrink-0">
@@ -42,7 +51,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </span>
           </Link>
 
-          {/* Search */}
           <form onSubmit={handleSearch} className="relative flex-1 max-w-xl">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -54,7 +62,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             />
           </form>
 
-          {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map(({ to, icon: Icon, label, match }) => (
               <Link
@@ -74,13 +81,55 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
           <Link
             to="/ask"
+            onClick={handleAsk}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shrink-0"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Poser une question</span>
+            <span className="hidden sm:inline">Poser</span>
           </Link>
 
-          {/* Mobile menu toggle */}
+          {user && profile ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-1.5 rounded-md px-1.5 py-1 hover:bg-secondary transition-colors"
+              >
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                  {profile.avatar}
+                </span>
+                <span className="hidden sm:inline text-xs font-medium text-foreground max-w-[100px] truncate">
+                  {profile.username}
+                </span>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-48 rounded-md border border-border bg-card shadow-lg overflow-hidden animate-fade-in">
+                  <Link
+                    to={`/user/${profile.id}`}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    Mon profil
+                  </Link>
+                  <button
+                    onClick={async () => { await signOut(); navigate("/"); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Déconnexion
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/auth"
+              className="hidden sm:flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+            >
+              <LogIn className="h-4 w-4" />
+              Connexion
+            </Link>
+          )}
+
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground transition-colors"
@@ -89,7 +138,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </button>
         </div>
 
-        {/* Mobile nav dropdown */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border bg-card p-3 animate-fade-in">
             <nav className="flex flex-col gap-1">
@@ -107,15 +155,22 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   {label}
                 </Link>
               ))}
+              {!user && (
+                <Link
+                  to="/auth"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Connexion
+                </Link>
+              )}
             </nav>
           </div>
         )}
       </header>
 
-      {/* Main */}
       <main className="container py-6">{children}</main>
 
-      {/* Footer */}
       <footer className="border-t border-border bg-card/50 mt-12">
         <div className="container py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -129,7 +184,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <Link to="/" className="hover:text-foreground transition-colors">Questions</Link>
               <Link to="/tags" className="hover:text-foreground transition-colors">Tags</Link>
               <Link to="/users" className="hover:text-foreground transition-colors">Utilisateurs</Link>
-              <span>© 2025 DevFlow</span>
+              <span>© 2026 DevFlow</span>
             </div>
           </div>
         </div>

@@ -1,27 +1,20 @@
 import { Link } from "react-router-dom";
-import { questions, users } from "@/data/mockData";
 import { Flame, Award, Zap } from "lucide-react";
+import { useQuestions, useProfiles } from "@/hooks/useData";
 
 const RightSidebar = () => {
-  const stats = {
-    totalQuestions: questions.length,
-    totalAnswers: questions.reduce((acc, q) => acc + q.answers.length, 0),
-    totalUsers: users.length,
-    unanswered: questions.filter((q) => q.answers.length === 0).length,
-  };
+  const { data: questions = [] } = useQuestions();
+  const { data: profiles = [] } = useProfiles();
 
-  const hotQuestions = [...questions]
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 4);
+  const totalAnswers = questions.reduce((acc, q) => acc + q.answers_count, 0);
+  const unanswered = questions.filter((q) => q.answers_count === 0).length;
 
-  const topUsers = [...users]
-    .sort((a, b) => b.reputation - a.reputation)
-    .slice(0, 5);
+  const hotQuestions = [...questions].sort((a, b) => b.views - a.views).slice(0, 4);
+  const topUsers = [...profiles].sort((a, b) => b.reputation - a.reputation).slice(0, 5);
 
   return (
     <aside className="hidden xl:block w-72 shrink-0">
       <div className="sticky top-20 space-y-5">
-        {/* Community Stats */}
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="bg-primary/10 px-4 py-2.5 border-b border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
@@ -30,61 +23,63 @@ const RightSidebar = () => {
             </h3>
           </div>
           <div className="p-4 grid grid-cols-2 gap-3">
-            <StatItem value={stats.totalQuestions} label="Questions" />
-            <StatItem value={stats.totalAnswers} label="Réponses" />
-            <StatItem value={stats.totalUsers} label="Utilisateurs" />
-            <StatItem value={stats.unanswered} label="Sans réponse" />
+            <StatItem value={questions.length} label="Questions" />
+            <StatItem value={totalAnswers} label="Réponses" />
+            <StatItem value={profiles.length} label="Utilisateurs" />
+            <StatItem value={unanswered} label="Sans réponse" />
           </div>
         </div>
 
-        {/* Hot Questions */}
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <div className="bg-destructive/10 px-4 py-2.5 border-b border-border">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-destructive flex items-center gap-1.5">
-              <Flame className="h-3 w-3" />
-              Questions populaires
-            </h3>
+        {hotQuestions.length > 0 && (
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="bg-destructive/10 px-4 py-2.5 border-b border-border">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-destructive flex items-center gap-1.5">
+                <Flame className="h-3 w-3" />
+                Questions populaires
+              </h3>
+            </div>
+            <div className="p-2">
+              {hotQuestions.map((q) => (
+                <Link
+                  key={q.id}
+                  to={`/question/${q.id}`}
+                  className="block rounded-md px-3 py-2 text-xs text-foreground/80 hover:text-primary hover:bg-secondary/50 transition-colors leading-snug"
+                >
+                  <span className="font-mono text-primary mr-1.5">{q.votes}</span>
+                  {q.title.length > 60 ? q.title.slice(0, 60) + "…" : q.title}
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="p-2">
-            {hotQuestions.map((q) => (
-              <Link
-                key={q.id}
-                to={`/question/${q.id}`}
-                className="block rounded-md px-3 py-2 text-xs text-foreground/80 hover:text-primary hover:bg-secondary/50 transition-colors leading-snug"
-              >
-                <span className="font-mono text-primary mr-1.5">{q.votes}</span>
-                {q.title.length > 60 ? q.title.slice(0, 60) + "…" : q.title}
-              </Link>
-            ))}
-          </div>
-        </div>
+        )}
 
-        {/* Top Users */}
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <div className="bg-accent/10 px-4 py-2.5 border-b border-border">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
-              <Award className="h-3 w-3" />
-              Top contributeurs
-            </h3>
+        {topUsers.length > 0 && (
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="bg-accent/10 px-4 py-2.5 border-b border-border">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
+                <Award className="h-3 w-3" />
+                Top contributeurs
+              </h3>
+            </div>
+            <div className="p-2">
+              {topUsers.map((user) => (
+                <Link
+                  key={user.id}
+                  to={`/user/${user.id}`}
+                  className="flex items-center gap-2.5 rounded-md px-3 py-2 hover:bg-secondary/50 transition-colors"
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground shrink-0">
+                    {user.avatar}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{user.username}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{formatReputation(user.reputation)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="p-2">
-            {topUsers.map((user) => (
-              <Link
-                key={user.id}
-                to={`/user/${user.id}`}
-                className="flex items-center gap-2.5 rounded-md px-3 py-2 hover:bg-secondary/50 transition-colors"
-              >
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground shrink-0">
-                  {user.avatar}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">{user.name}</p>
-                  <p className="text-[10px] text-muted-foreground font-mono">{formatReputation(user.reputation)}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </aside>
   );
