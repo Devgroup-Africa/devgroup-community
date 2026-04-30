@@ -14,16 +14,293 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      answers: {
+        Row: {
+          accepted: boolean
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          question_id: string
+          updated_at: string
+        }
+        Insert: {
+          accepted?: boolean
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          question_id: string
+          updated_at?: string
+        }
+        Update: {
+          accepted?: boolean
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions_with_meta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar: string
+          bio: string | null
+          created_at: string
+          id: string
+          location: string | null
+          reputation: number
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          avatar?: string
+          bio?: string | null
+          created_at?: string
+          id: string
+          location?: string | null
+          reputation?: number
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          avatar?: string
+          bio?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          reputation?: number
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      question_tags: {
+        Row: {
+          question_id: string
+          tag_name: string
+        }
+        Insert: {
+          question_id: string
+          tag_name: string
+        }
+        Update: {
+          question_id?: string
+          tag_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_tags_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_tags_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions_with_meta"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_tags_tag_name_fkey"
+            columns: ["tag_name"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          author_id: string
+          body: string
+          bookmarks: number
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          author_id: string
+          body: string
+          bookmarks?: number
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          bookmarks?: number
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          created_at: string
+          description: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["vote_target"]
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["vote_target"]
+          user_id: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["vote_target"]
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      answers_with_meta: {
+        Row: {
+          accepted: boolean | null
+          author_avatar: string | null
+          author_id: string | null
+          author_username: string | null
+          body: string | null
+          created_at: string | null
+          id: string | null
+          question_id: string | null
+          updated_at: string | null
+          votes: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answers_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions_with_meta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions_with_meta: {
+        Row: {
+          answers_count: number | null
+          author_avatar: string | null
+          author_id: string | null
+          author_username: string | null
+          body: string | null
+          bookmarks: number | null
+          created_at: string | null
+          id: string | null
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+          views: number | null
+          votes: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      vote_target: "question" | "answer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +427,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      vote_target: ["question", "answer"],
+    },
   },
 } as const
