@@ -28,13 +28,16 @@ const QuestionDetail = () => {
   const { data: answers = [] } = useAnswers(id);
   const { data: allQuestions = [] } = useQuestions();
 
-  // Increment views once
+  // Increment views once on load
+  const [viewIncremented, setViewIncremented] = useState(false);
   useEffect(() => {
-    if (!id || !question) return;
-    supabase.rpc("increment_views" as any, { q_id: id }).catch(() => {
-      supabase.from("questions").update({ views: question.views + 1 }).eq("id", id);
+    if (!id || !question || viewIncremented) return;
+    setViewIncremented(true);
+    supabase.from("questions").update({ views: question.views + 1 }).eq("id", id).then(() => {
+      qc.invalidateQueries({ queryKey: ["question", id] });
     });
-  }, [id]); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, question?.id]);
 
   useEffect(() => {
     if (contentRef.current) {
