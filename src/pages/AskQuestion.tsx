@@ -1,19 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { allTags } from "@/data/mockData";
-import { X, AlertCircle, Info } from "lucide-react";
+import { useTags } from "@/hooks/useData";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { X, AlertCircle, Info, LogIn } from "lucide-react";
+import { toast } from "sonner";
 
 const AskQuestion = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: tags = [] } = useTags();
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagSearch, setTagSearch] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const filteredTags = allTags.filter(
-    (t) => t.includes(tagSearch.toLowerCase()) && !selectedTags.includes(t)
-  );
+  const filteredTags = tags
+    .map((t) => t.name)
+    .filter((t) => t.includes(tagSearch.toLowerCase()) && !selectedTags.includes(t));
 
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -24,12 +31,54 @@ const AskQuestion = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/");
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    setSubmitting(true);
+    const { data, error } = await supabase
+      .from("questions")
+      .insert({ author_id: user.id, title: title.trim(), body: body.trim() })
+      .select("id")
+      .single();
+    if (error || !data) {
+      setSubmitting(false);
+      toast.error("Impossible de publier la question.");
+      return;
+    }
+    if (selectedTags.length > 0) {
+      const rows = selectedTags.map((tag_name) => ({ question_id: data.id, tag_name }));
+      await supabase.from("question_tags").insert(rows);
+    }
+    setSubmitting(false);
+    toast.success("Question publiée !");
+    navigate(`/question/${data.id}`);
   };
 
-  const isValid = title.trim().length >= 15 && body.trim().length >= 30 && selectedTags.length >= 1;
+  const isValid =
+    title.trim().length >= 15 && body.trim().length >= 30 && selectedTags.length >= 1;
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className="max-w-md mx-auto text-center py-16 animate-fade-in">
+          <LogIn className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-xl font-bold font-mono text-foreground mb-2">Connexion requise</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            Vous devez être connecté pour poser une question.
+          </p>
+          <button
+            onClick={() => navigate("/auth")}
+            className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Se connecter
+          </button>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -41,7 +90,6 @@ const AskQuestion = () => {
           Décrivez votre problème clairement pour obtenir les meilleures réponses.
         </p>
 
-        {/* Guidelines */}
         <div className="rounded-lg border border-border bg-primary/5 p-4 mb-6">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
             <Info className="h-4 w-4 text-primary" />
@@ -50,17 +98,14 @@ const AskQuestion = () => {
           <ul className="text-xs text-muted-foreground space-y-1.5 ml-5 list-disc">
             <li>Résumez le problème dans le titre (min. 15 caractères)</li>
             <li>Décrivez en détail ce que vous avez essayé (min. 30 caractères)</li>
-            <li>Incluez des blocs de code avec la syntaxe Markdown</li>
+            <li>Incluez des blocs de code avec la syntaxe Markdown ```</li>
             <li>Ajoutez entre 1 et 5 tags pertinents</li>
           </ul>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Title */}
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Titre
-            </label>
+            <label className="block text-sm font-semibold text-foreground mb-1.5">Titre</label>
             <input
               type="text"
               value={title}
@@ -77,11 +122,8 @@ const AskQuestion = () => {
             )}
           </div>
 
-          {/* Body */}
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Description
-            </label>
+            <label className="block text-sm font-semibold text-foreground mb-1.5">Description</label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -97,7 +139,6 @@ const AskQuestion = () => {
             )}
           </div>
 
-          {/* Tags */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
               Tags <span className="text-muted-foreground font-normal">(1-5 tags)</span>
@@ -143,14 +184,13 @@ const AskQuestion = () => {
             )}
           </div>
 
-          {/* Submit */}
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
-              disabled={!isValid}
+              disabled={!isValid || submitting}
               className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Publier la question
+              {submitting ? "Publication…" : "Publier la question"}
             </button>
             <button
               type="button"

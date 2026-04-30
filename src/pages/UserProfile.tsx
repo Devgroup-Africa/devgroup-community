@@ -1,16 +1,65 @@
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { users, questions } from "@/data/mockData";
 import { formatReputation } from "@/components/RightSidebar";
-import { ArrowLeft, MapPin, Calendar, Clock, MessageSquare, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, MapPin, Calendar, MessageSquare, CheckCircle2, Loader2, Edit3 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useProfile, useQuestions } from "@/hooks/useData";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { formatDate } from "@/lib/timeAgo";
 
 const UserProfile = () => {
   const { id } = useParams();
-  const user = users.find((u) => u.id === id);
+  const { user, refreshProfile } = useAuth();
+  const qc = useQueryClient();
+  const { data: profile, isLoading } = useProfile(id);
+  const { data: questions = [] } = useQuestions();
   const [tab, setTab] = useState<"questions" | "answers">("questions");
+  const [editing, setEditing] = useState(false);
+  const [bio, setBio] = useState("");
+  const [location, setLocation] = useState("");
+  const [answers, setAnswers] = useState<{ id: string; question_id: string; question_title: string; created_at: string; accepted: boolean; votes: number }[]>([]);
 
-  if (!user) {
+  useEffect(() => {
+    if (profile) {
+      setBio(profile.bio || "");
+      setLocation(profile.location || "");
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("answers_with_meta")
+        .select("id, question_id, created_at, accepted, votes, questions:questions!inner(title)")
+        .eq("author_id", id)
+        .order("created_at", { ascending: false });
+      const mapped = (data || []).map((a: any) => ({
+        id: a.id,
+        question_id: a.question_id,
+        question_title: a.questions?.title || "Question",
+        created_at: a.created_at,
+        accepted: a.accepted,
+        votes: a.votes,
+      }));
+      setAnswers(mapped);
+    })();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!profile) {
     return (
       <Layout>
         <div className="text-center py-20">
@@ -23,12 +72,24 @@ const UserProfile = () => {
     );
   }
 
-  const userQuestions = questions.filter((q) => q.authorId === user.id);
-  const userAnswers = questions.flatMap((q) =>
-    q.answers
-      .filter((a) => a.authorId === user.id)
-      .map((a) => ({ ...a, questionTitle: q.title, questionId: q.id }))
-  );
+  const userQuestions = questions.filter((q) => q.author_id === profile.id);
+  const isOwn = user?.id === profile.id;
+
+  const handleSave = async () => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ bio, location })
+      .eq("id", profile.id);
+    if (error) {
+      toast.error("Impossible de sauvegarder.");
+      return;
+    }
+    toast.success("Profil mis à jour.");
+    setEditing(false);
+    qc.invalidateQueries({ queryKey: ["profile", profile.id] });
+    qc.invalidateQueries({ queryKey: ["profiles"] });
+    refreshProfile();
+  };
 
   return (
     <Layout>
@@ -41,66 +102,92 @@ const UserProfile = () => {
           Utilisateurs
         </Link>
 
-        {/* Profile Header */}
         <div className="rounded-lg border border-border bg-card p-6 animate-fade-in">
           <div className="flex flex-col sm:flex-row items-start gap-5">
             <span className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-secondary text-2xl font-bold text-secondary-foreground shrink-0">
-              {user.avatar}
+              {profile.avatar}
             </span>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold font-mono text-foreground">{user.name}</h1>
-              <p className="text-sm text-muted-foreground mt-1">{user.bio}</p>
-              <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {user.location}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  Membre depuis {user.joinedAt}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Vu {user.lastSeen}
-                </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl font-bold font-mono text-foreground">{profile.username}</h1>
+                {isOwn && !editing && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <Edit3 className="h-3 w-3" />
+                    Éditer
+                  </button>
+                )}
               </div>
+
+              {editing ? (
+                <div className="mt-3 space-y-2">
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Votre bio..."
+                    maxLength={200}
+                    className="w-full rounded-md border border-border bg-muted p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    rows={2}
+                  />
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Localisation"
+                    maxLength={80}
+                    className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSave}
+                      className="rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      Sauvegarder
+                    </button>
+                    <button
+                      onClick={() => { setEditing(false); setBio(profile.bio || ""); setLocation(profile.location || ""); }}
+                      className="rounded-md border border-border px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {profile.bio && <p className="text-sm text-muted-foreground mt-1">{profile.bio}</p>}
+                  <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
+                    {profile.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {profile.location}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      Membre depuis {formatDate(profile.created_at)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Stats */}
             <div className="flex sm:flex-col items-center gap-4 sm:gap-2 sm:text-right shrink-0">
               <div>
-                <p className="text-2xl font-bold font-mono text-primary">{formatReputation(user.reputation)}</p>
+                <p className="text-2xl font-bold font-mono text-primary">{formatReputation(profile.reputation)}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Réputation</p>
-              </div>
-              <div className="flex items-center gap-3 mt-1">
-                {user.badges.gold > 0 && (
-                  <span className="flex items-center gap-1 text-xs">
-                    <span className="inline-block h-3 w-3 rounded-full bg-yellow-500" />
-                    {user.badges.gold}
-                  </span>
-                )}
-                <span className="flex items-center gap-1 text-xs">
-                  <span className="inline-block h-3 w-3 rounded-full bg-gray-400" />
-                  {user.badges.silver}
-                </span>
-                <span className="flex items-center gap-1 text-xs">
-                  <span className="inline-block h-3 w-3 rounded-full bg-amber-700" />
-                  {user.badges.bronze}
-                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Activity Tabs */}
         <div className="mt-6">
           <div className="flex items-center gap-1 rounded-lg bg-muted p-1 mb-4 w-fit">
             <button
               onClick={() => setTab("questions")}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                tab === "questions"
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                tab === "questions" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <MessageSquare className="h-3.5 w-3.5" />
@@ -109,13 +196,11 @@ const UserProfile = () => {
             <button
               onClick={() => setTab("answers")}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                tab === "answers"
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                tab === "answers" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Réponses ({userAnswers.length})
+              Réponses ({answers.length})
             </button>
           </div>
 
@@ -132,13 +217,12 @@ const UserProfile = () => {
                   >
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-sm font-bold text-primary min-w-[2rem] text-right">{q.votes}</span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground truncate hover:text-primary transition-colors">{q.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {q.tags.slice(0, 3).map((tag) => (
                             <span key={tag} className="rounded-sm bg-tag px-1.5 py-0.5 text-[10px] font-mono text-tag-foreground">{tag}</span>
                           ))}
-                          <span className="text-[10px] text-muted-foreground">{q.createdAt}</span>
                         </div>
                       </div>
                     </div>
@@ -150,25 +234,22 @@ const UserProfile = () => {
 
           {tab === "answers" && (
             <div className="space-y-2">
-              {userAnswers.length === 0 ? (
+              {answers.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">Aucune réponse publiée.</p>
               ) : (
-                userAnswers.map((a) => (
+                answers.map((a) => (
                   <Link
                     key={a.id}
-                    to={`/question/${a.questionId}`}
+                    to={`/question/${a.question_id}`}
                     className="block rounded-lg border border-border bg-card p-4 hover:border-primary/30 transition-colors animate-fade-in"
                   >
                     <div className="flex items-center gap-3">
                       <span className={`font-mono text-sm font-bold min-w-[2rem] text-right ${a.accepted ? "text-primary" : "text-foreground"}`}>
                         {a.votes}
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          {a.accepted && <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />}
-                          <p className="text-sm font-medium text-foreground truncate">{a.questionTitle}</p>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">{a.createdAt}</span>
+                      <div className="min-w-0 flex-1 flex items-center gap-2">
+                        {a.accepted && <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />}
+                        <p className="text-sm font-medium text-foreground truncate">{a.question_title}</p>
                       </div>
                     </div>
                   </Link>
