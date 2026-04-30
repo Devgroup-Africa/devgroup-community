@@ -1,19 +1,43 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { questions } from "@/data/mockData";
 import Layout from "@/components/Layout";
 import VoteButton from "@/components/VoteButton";
 import CopyButton from "@/components/CopyButton";
-import { CheckCircle2, ArrowLeft, Eye, Bookmark, Share2, MessageSquare, Clock } from "lucide-react";
+import { CheckCircle2, ArrowLeft, Eye, Bookmark, Share2, MessageSquare, Clock, Loader2 } from "lucide-react";
 import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
+import { useQuestion, useAnswers, useQuestions } from "@/hooks/useData";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { timeAgo } from "@/lib/timeAgo";
 
 const QuestionDetail = () => {
   const { id } = useParams();
-  const question = questions.find((q) => q.id === id);
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const qc = useQueryClient();
   const contentRef = useRef<HTMLDivElement>(null);
   const [bookmarked, setBookmarked] = useState(false);
   const [answerSort, setAnswerSort] = useState<"votes" | "recent">("votes");
+  const [answerBody, setAnswerBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const { data: question, isLoading } = useQuestion(id);
+  const { data: answers = [] } = useAnswers(id);
+  const { data: allQuestions = [] } = useQuestions();
+
+  // Increment views once on load
+  const [viewIncremented, setViewIncremented] = useState(false);
+  useEffect(() => {
+    if (!id || !question || viewIncremented) return;
+    setViewIncremented(true);
+    supabase.from("questions").update({ views: question.views + 1 }).eq("id", id).then(() => {
+      qc.invalidateQueries({ queryKey: ["question", id] });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, question?.id]);
 
   useEffect(() => {
     if (contentRef.current) {
@@ -22,6 +46,16 @@ const QuestionDetail = () => {
       });
     }
   });
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </Layout>
+    );
+  }
 
   if (!question) {
     return (
@@ -36,27 +70,67 @@ const QuestionDetail = () => {
     );
   }
 
-  const sortedAnswers = [...question.answers].sort((a, b) => {
+  const sortedAnswers = [...answers].sort((a, b) => {
     if (answerSort === "votes") {
-      // Accepted first, then by votes
       if (a.accepted && !b.accepted) return -1;
       if (!a.accepted && b.accepted) return 1;
       return b.votes - a.votes;
     }
-    return 0;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  // Related questions (same tags)
-  const related = questions
+  const related = allQuestions
     .filter((q) => q.id !== question.id && q.tags.some((t) => question.tags.includes(t)))
     .slice(0, 4);
+
+  const isQuestionAuthor = user?.id === question.author_id;
+
+  const handleAcceptAnswer = async (answerId: string, currentlyAccepted: boolean) => {
+    // Unaccept all answers for this question, then accept the chosen one
+    await supabase.from("answers").update({ accepted: false }).eq("question_id", question.id);
+    if (!currentlyAccepted) {
+      const { error } = await supabase.from("answers").update({ accepted: true }).eq("id", answerId);
+      if (error) {
+        toast.error("Impossible d'accepter cette réponse.");
+        return;
+      }
+      toast.success("Réponse acceptée !");
+    }
+    qc.invalidateQueries({ queryKey: ["answers", question.id] });
+  };
+
+  const handleSubmitAnswer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !profile) {
+      navigate("/auth");
+      return;
+    }
+    if (answerBody.trim().length < 20) {
+      toast.error("Votre réponse doit contenir au moins 20 caractères.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.from("answers").insert({
+      question_id: question.id,
+      author_id: user.id,
+      body: answerBody.trim(),
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error("Impossible de publier la réponse.");
+      return;
+    }
+    setAnswerBody("");
+    toast.success("Réponse publiée !");
+    qc.invalidateQueries({ queryKey: ["answers", question.id] });
+    qc.invalidateQueries({ queryKey: ["questions"] });
+  };
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto" ref={contentRef}>
         <div className="flex gap-6">
           <div className="flex-1 min-w-0">
-            {/* Back */}
             <Link
               to="/"
               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
@@ -65,11 +139,10 @@ const QuestionDetail = () => {
               Retour
             </Link>
 
-            {/* Question */}
             <div className="rounded-lg border border-border bg-card p-4 sm:p-6 animate-fade-in">
               <div className="flex gap-4 sm:gap-5">
                 <div className="hidden sm:block">
-                  <VoteButton initialVotes={question.votes} />
+                  <VoteButton totalVotes={question.votes} targetType="question" targetId={question.id} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-lg sm:text-xl font-bold font-mono text-foreground leading-tight">
@@ -77,17 +150,17 @@ const QuestionDetail = () => {
                   </h1>
                   <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
                     <Link
-                      to={`/user/${question.authorId}`}
+                      to={`/user/${question.author_id}`}
                       className="flex items-center gap-1 hover:text-primary transition-colors"
                     >
                       <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground">
-                        {question.authorAvatar}
+                        {question.author_avatar}
                       </span>
-                      {question.author}
+                      {question.author_username}
                     </Link>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {question.createdAt}
+                      {timeAgo(question.created_at)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Eye className="h-3 w-3" />
@@ -95,9 +168,8 @@ const QuestionDetail = () => {
                     </span>
                   </div>
 
-                  {/* Mobile vote */}
                   <div className="sm:hidden mt-3">
-                    <VoteButton initialVotes={question.votes} />
+                    <VoteButton totalVotes={question.votes} targetType="question" targetId={question.id} />
                   </div>
 
                   <div className="mt-4 text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
@@ -116,7 +188,6 @@ const QuestionDetail = () => {
                     ))}
                   </div>
 
-                  {/* Actions */}
                   <div className="mt-4 flex items-center gap-3 pt-3 border-t border-border">
                     <button
                       onClick={() => setBookmarked(!bookmarked)}
@@ -125,9 +196,15 @@ const QuestionDetail = () => {
                       }`}
                     >
                       <Bookmark className={`h-3.5 w-3.5 ${bookmarked ? "fill-current" : ""}`} />
-                      {bookmarked ? "Enregistrée" : "Enregistrer"} ({question.bookmarks + (bookmarked ? 1 : 0)})
+                      {bookmarked ? "Enregistrée" : "Enregistrer"}
                     </button>
-                    <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        toast.success("Lien copié !");
+                      }}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
                       <Share2 className="h-3.5 w-3.5" />
                       Partager
                     </button>
@@ -136,13 +213,12 @@ const QuestionDetail = () => {
               </div>
             </div>
 
-            {/* Answers */}
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold font-mono text-foreground">
-                  {question.answers.length} réponse{question.answers.length !== 1 ? "s" : ""}
+                  {answers.length} réponse{answers.length !== 1 ? "s" : ""}
                 </h2>
-                {question.answers.length > 1 && (
+                {answers.length > 1 && (
                   <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
                     <button
                       onClick={() => setAnswerSort("votes")}
@@ -164,7 +240,7 @@ const QuestionDetail = () => {
                 )}
               </div>
 
-              {question.answers.length === 0 && (
+              {answers.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border bg-card/50 p-8 text-center">
                   <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                   <p className="text-muted-foreground">
@@ -183,20 +259,39 @@ const QuestionDetail = () => {
                   >
                     <div className="flex gap-4 sm:gap-5">
                       <div className="hidden sm:flex flex-col items-center gap-2">
-                        <VoteButton initialVotes={answer.votes} />
-                        {answer.accepted && (
-                          <CheckCircle2 className="h-6 w-6 text-primary" />
+                        <VoteButton totalVotes={answer.votes} targetType="answer" targetId={answer.id} />
+                        {isQuestionAuthor ? (
+                          <button
+                            onClick={() => handleAcceptAnswer(answer.id, answer.accepted)}
+                            title={answer.accepted ? "Retirer l'acceptation" : "Accepter cette réponse"}
+                            className={`rounded-md p-1 transition-colors ${
+                              answer.accepted
+                                ? "text-primary"
+                                : "text-muted-foreground hover:text-primary"
+                            }`}
+                          >
+                            <CheckCircle2 className="h-6 w-6" />
+                          </button>
+                        ) : (
+                          answer.accepted && <CheckCircle2 className="h-6 w-6 text-primary" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        {/* Mobile vote + accepted */}
                         <div className="flex sm:hidden items-center gap-3 mb-3">
-                          <VoteButton initialVotes={answer.votes} />
+                          <VoteButton totalVotes={answer.votes} targetType="answer" targetId={answer.id} />
                           {answer.accepted && (
                             <span className="flex items-center gap-1 text-xs text-primary font-medium">
                               <CheckCircle2 className="h-4 w-4" />
                               Acceptée
                             </span>
+                          )}
+                          {isQuestionAuthor && !answer.accepted && (
+                            <button
+                              onClick={() => handleAcceptAnswer(answer.id, false)}
+                              className="text-xs text-muted-foreground hover:text-primary"
+                            >
+                              Accepter
+                            </button>
                           )}
                         </div>
 
@@ -205,15 +300,15 @@ const QuestionDetail = () => {
                         </div>
                         <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground pt-3 border-t border-border">
                           <Link
-                            to={`/user/${answer.authorId}`}
+                            to={`/user/${answer.author_id}`}
                             className="flex items-center gap-1.5 hover:text-primary transition-colors"
                           >
                             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-secondary-foreground">
-                              {answer.authorAvatar}
+                              {answer.author_avatar}
                             </span>
-                            <span className="font-medium text-foreground">{answer.author}</span>
+                            <span className="font-medium text-foreground">{answer.author_username}</span>
                           </Link>
-                          <span>· {answer.createdAt}</span>
+                          <span>· {timeAgo(answer.created_at)}</span>
                           {answer.accepted && (
                             <span className="hidden sm:inline ml-auto rounded-sm bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
                               Acceptée
@@ -227,22 +322,34 @@ const QuestionDetail = () => {
               </div>
             </div>
 
-            {/* Answer form */}
             <div className="mt-8 rounded-lg border border-border bg-card p-4 sm:p-6 animate-fade-in">
               <h3 className="text-base font-bold font-mono text-foreground mb-3">
                 Votre réponse
               </h3>
-              <textarea
-                placeholder="Écrivez votre réponse... (Markdown supporté)"
-                className="w-full h-32 rounded-md border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y transition-colors font-mono"
-              />
-              <button className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
-                Publier la réponse
-              </button>
+              {!user && (
+                <div className="mb-3 rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
+                  <Link to="/auth" className="text-primary hover:underline font-medium">Connectez-vous</Link> pour publier une réponse.
+                </div>
+              )}
+              <form onSubmit={handleSubmitAnswer}>
+                <textarea
+                  value={answerBody}
+                  onChange={(e) => setAnswerBody(e.target.value)}
+                  disabled={!user}
+                  placeholder="Écrivez votre réponse... (Markdown supporté, blocs de code avec ```)"
+                  className="w-full h-32 rounded-md border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y transition-colors font-mono disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={!user || submitting || answerBody.trim().length < 20}
+                  className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? "Publication…" : "Publier la réponse"}
+                </button>
+              </form>
             </div>
           </div>
 
-          {/* Related Questions Sidebar */}
           {related.length > 0 && (
             <aside className="hidden lg:block w-64 shrink-0">
               <div className="sticky top-20 rounded-lg border border-border bg-card overflow-hidden">
@@ -300,7 +407,6 @@ function renderBody(text: string) {
         </code>
       );
     }
-    // Bold
     const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
     return boldParts.map((bp, j) => {
       if (bp.startsWith("**") && bp.endsWith("**")) {
