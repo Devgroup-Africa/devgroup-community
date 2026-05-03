@@ -146,6 +146,11 @@ const QuestionDetail = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-lg sm:text-xl font-bold font-mono text-foreground leading-tight">
+                    {question.post_type === "news" && (
+                      <span className="mr-2 inline-block rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-primary align-middle">
+                        News
+                      </span>
+                    )}
                     {question.title}
                   </h1>
                   <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-muted-foreground">

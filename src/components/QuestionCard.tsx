@@ -47,6 +47,11 @@ const QuestionCard = ({ question, hasAccepted = false }: { question: QuestionRow
           </div>
 
           <h3 className="text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+            {question.post_type === "news" && (
+              <span className="mr-2 inline-block rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-primary align-middle">
+                News
+              </span>
+            )}
             {question.title}
           </h3>
           <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden sm:block">

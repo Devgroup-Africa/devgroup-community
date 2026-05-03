@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Code2, MessageSquare, Plus, Search, TrendingUp, Users, Menu, X, LogOut, LogIn, User as UserIcon, Shield } from "lucide-react";
+import { Code2, MessageSquare, Plus, Search, TrendingUp, Users, Menu, X, LogOut, LogIn, User as UserIcon, Shield, Newspaper } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useRole";
@@ -37,6 +37,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const navLinks = [
     { to: "/", icon: MessageSquare, label: "Questions", match: "/" },
+    { to: "/?type=news", icon: Newspaper, label: "News", match: "/news" },
     { to: "/tags", icon: TrendingUp, label: "Tags", match: "/tags" },
     { to: "/users", icon: Users, label: "Utilisateurs", match: "/users" },
   ];
@@ -86,7 +87,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shrink-0"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Poser</span>
+            <span className="hidden sm:inline">Publier</span>
           </Link>
 
           {user && profile ? (

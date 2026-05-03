@@ -4,14 +4,17 @@ import Layout from "@/components/Layout";
 import { useTags } from "@/hooks/useData";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { X, AlertCircle, Info, LogIn } from "lucide-react";
+import { X, AlertCircle, Info, LogIn, MessageSquare, Newspaper } from "lucide-react";
 import { toast } from "sonner";
+
+type PostType = "question" | "news";
 
 const AskQuestion = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: tags = [] } = useTags();
 
+  const [postType, setPostType] = useState<PostType>("question");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -40,12 +43,12 @@ const AskQuestion = () => {
     setSubmitting(true);
     const { data, error } = await supabase
       .from("questions")
-      .insert({ author_id: user.id, title: title.trim(), body: body.trim() })
+      .insert({ author_id: user.id, title: title.trim(), body: body.trim(), post_type: postType } as any)
       .select("id")
       .single();
     if (error || !data) {
       setSubmitting(false);
-      toast.error("Impossible de publier la question.");
+      toast.error("Impossible de publier.");
       return;
     }
     if (selectedTags.length > 0) {
@@ -53,12 +56,15 @@ const AskQuestion = () => {
       await supabase.from("question_tags").insert(rows);
     }
     setSubmitting(false);
-    toast.success("Question publiée !");
+    toast.success(postType === "news" ? "Actualité publiée !" : "Question publiée !");
     navigate(`/question/${data.id}`);
   };
 
+  const isQuestion = postType === "question";
   const isValid =
-    title.trim().length >= 15 && body.trim().length >= 30 && selectedTags.length >= 1;
+    title.trim().length >= 15 &&
+    body.trim().length >= 30 &&
+    (isQuestion ? selectedTags.length >= 1 : true);
 
   if (!user) {
     return (
@@ -84,22 +90,45 @@ const AskQuestion = () => {
     <Layout>
       <div className="max-w-3xl mx-auto animate-fade-in">
         <h1 className="text-2xl font-bold font-mono text-foreground mb-1">
-          Poser une question
+          {isQuestion ? "Poser une question" : "Publier une actualité"}
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Décrivez votre problème clairement pour obtenir les meilleures réponses.
+        <p className="text-sm text-muted-foreground mb-4">
+          {isQuestion
+            ? "Décrivez votre problème clairement pour obtenir les meilleures réponses."
+            : "Partagez une actualité, une annonce ou un événement avec la communauté."}
         </p>
+
+        <div className="mb-6 inline-flex items-center gap-1 rounded-lg bg-muted p-1">
+          {([
+            { key: "question" as PostType, icon: MessageSquare, label: "Question" },
+            { key: "news" as PostType, icon: Newspaper, label: "Actualité" },
+          ]).map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setPostType(key)}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                postType === key
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
 
         <div className="rounded-lg border border-border bg-primary/5 p-4 mb-6">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
             <Info className="h-4 w-4 text-primary" />
-            Comment poser une bonne question
+            {isQuestion ? "Comment poser une bonne question" : "Comment rédiger une bonne actualité"}
           </h3>
           <ul className="text-xs text-muted-foreground space-y-1.5 ml-5 list-disc">
-            <li>Résumez le problème dans le titre (min. 15 caractères)</li>
-            <li>Décrivez en détail ce que vous avez essayé (min. 30 caractères)</li>
-            <li>Incluez des blocs de code avec la syntaxe Markdown ```</li>
-            <li>Ajoutez entre 1 et 5 tags pertinents</li>
+            <li>Résumez {isQuestion ? "le problème" : "l'actualité"} dans le titre (min. 15 caractères)</li>
+            <li>{isQuestion ? "Décrivez en détail ce que vous avez essayé" : "Détaillez le contexte et les informations clés"} (min. 30 caractères)</li>
+            <li>Utilisez le Markdown et les blocs de code avec ```</li>
+            <li>{isQuestion ? "Ajoutez 1 à 5 tags pertinents" : "Ajoutez jusqu'à 5 tags (optionnel)"}</li>
           </ul>
         </div>
 
@@ -141,7 +170,7 @@ const AskQuestion = () => {
 
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Tags <span className="text-muted-foreground font-normal">(1-5 tags)</span>
+              Tags <span className="text-muted-foreground font-normal">{isQuestion ? "(1-5 tags)" : "(optionnel, max 5)"}</span>
             </label>
 
             {selectedTags.length > 0 && (
@@ -190,7 +219,7 @@ const AskQuestion = () => {
               disabled={!isValid || submitting}
               className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Publication…" : "Publier la question"}
+              {submitting ? "Publication…" : isQuestion ? "Publier la question" : "Publier l'actualité"}
             </button>
             <button
               type="button"
