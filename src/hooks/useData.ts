@@ -42,7 +42,7 @@ export const useQuestions = () =>
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []) as QuestionRow[];
+      return ((data || []) as unknown as QuestionRow[]).map((q) => ({ ...q, post_type: q.post_type ?? "question" }));
     },
   });
 
@@ -57,7 +57,9 @@ export const useQuestion = (id: string | undefined) =>
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
-      return data as QuestionRow | null;
+      if (!data) return null;
+      const row = data as unknown as QuestionRow;
+      return { ...row, post_type: row.post_type ?? "question" };
     },
   });
 
