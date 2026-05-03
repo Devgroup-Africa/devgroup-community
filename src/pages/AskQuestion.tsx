@@ -43,12 +43,12 @@ const AskQuestion = () => {
     setSubmitting(true);
     const { data, error } = await supabase
       .from("questions")
-      .insert({ author_id: user.id, title: title.trim(), body: body.trim() })
+      .insert({ author_id: user.id, title: title.trim(), body: body.trim(), post_type: postType } as any)
       .select("id")
       .single();
     if (error || !data) {
       setSubmitting(false);
-      toast.error("Impossible de publier la question.");
+      toast.error("Impossible de publier.");
       return;
     }
     if (selectedTags.length > 0) {
@@ -56,12 +56,15 @@ const AskQuestion = () => {
       await supabase.from("question_tags").insert(rows);
     }
     setSubmitting(false);
-    toast.success("Question publiée !");
+    toast.success(postType === "news" ? "Actualité publiée !" : "Question publiée !");
     navigate(`/question/${data.id}`);
   };
 
+  const isQuestion = postType === "question";
   const isValid =
-    title.trim().length >= 15 && body.trim().length >= 30 && selectedTags.length >= 1;
+    title.trim().length >= 15 &&
+    body.trim().length >= 30 &&
+    (isQuestion ? selectedTags.length >= 1 : true);
 
   if (!user) {
     return (
