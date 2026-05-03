@@ -4,14 +4,17 @@ import Layout from "@/components/Layout";
 import { useTags } from "@/hooks/useData";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { X, AlertCircle, Info, LogIn } from "lucide-react";
+import { X, AlertCircle, Info, LogIn, MessageSquare, Newspaper } from "lucide-react";
 import { toast } from "sonner";
+
+type PostType = "question" | "news";
 
 const AskQuestion = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: tags = [] } = useTags();
 
+  const [postType, setPostType] = useState<PostType>("question");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
