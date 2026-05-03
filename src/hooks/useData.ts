@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+export type PostType = "question" | "news";
+
 export interface QuestionRow {
   id: string;
   title: string;
@@ -16,6 +18,7 @@ export interface QuestionRow {
   votes: number;
   answers_count: number;
   tags: string[];
+  post_type: PostType;
 }
 
 export interface AnswerRow {
