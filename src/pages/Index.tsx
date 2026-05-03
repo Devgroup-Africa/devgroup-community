@@ -26,8 +26,20 @@ const Index = () => {
     setActiveTag(tagFromUrl);
   }, [tagFromUrl]);
 
+  useEffect(() => {
+    setTypeFilter(typeFromUrl);
+  }, [typeFromUrl]);
+
+  const updateType = (t: TypeFilter) => {
+    setTypeFilter(t);
+    const params = new URLSearchParams(searchParams);
+    if (t === "all") params.delete("type"); else params.set("type", t);
+    setSearchParams(params, { replace: true });
+  };
+
   const filtered = useMemo(() => {
     return questions
+      .filter((q) => typeFilter === "all" || q.post_type === typeFilter)
       .filter((q) => !activeTag || q.tags.includes(activeTag))
       .filter((q) => {
         if (!searchFromUrl) return true;
@@ -44,7 +56,7 @@ const Index = () => {
         if (sortBy === "trending") return b.views - a.views;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-  }, [questions, activeTag, searchFromUrl, sortBy]);
+  }, [questions, activeTag, searchFromUrl, sortBy, typeFilter]);
 
   const popularTags = tags.slice(0, 12);
 
