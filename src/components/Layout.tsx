@@ -37,6 +37,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const navLinks = [
     { to: "/", icon: MessageSquare, label: "Questions", match: "/" },
+    { to: "/?type=news", icon: Newspaper, label: "News", match: "/news" },
     { to: "/tags", icon: TrendingUp, label: "Tags", match: "/tags" },
     { to: "/users", icon: Users, label: "Utilisateurs", match: "/users" },
   ];
