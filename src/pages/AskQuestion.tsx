@@ -219,7 +219,7 @@ const AskQuestion = () => {
               disabled={!isValid || submitting}
               className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Publication…" : "Publier la question"}
+              {submitting ? "Publication…" : isQuestion ? "Publier la question" : "Publier l'actualité"}
             </button>
             <button
               type="button"
