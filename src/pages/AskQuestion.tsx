@@ -90,22 +90,45 @@ const AskQuestion = () => {
     <Layout>
       <div className="max-w-3xl mx-auto animate-fade-in">
         <h1 className="text-2xl font-bold font-mono text-foreground mb-1">
-          Poser une question
+          {isQuestion ? "Poser une question" : "Publier une actualité"}
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Décrivez votre problème clairement pour obtenir les meilleures réponses.
+        <p className="text-sm text-muted-foreground mb-4">
+          {isQuestion
+            ? "Décrivez votre problème clairement pour obtenir les meilleures réponses."
+            : "Partagez une actualité, une annonce ou un événement avec la communauté."}
         </p>
+
+        <div className="mb-6 inline-flex items-center gap-1 rounded-lg bg-muted p-1">
+          {([
+            { key: "question" as PostType, icon: MessageSquare, label: "Question" },
+            { key: "news" as PostType, icon: Newspaper, label: "Actualité" },
+          ]).map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setPostType(key)}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                postType === key
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
 
         <div className="rounded-lg border border-border bg-primary/5 p-4 mb-6">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
             <Info className="h-4 w-4 text-primary" />
-            Comment poser une bonne question
+            {isQuestion ? "Comment poser une bonne question" : "Comment rédiger une bonne actualité"}
           </h3>
           <ul className="text-xs text-muted-foreground space-y-1.5 ml-5 list-disc">
-            <li>Résumez le problème dans le titre (min. 15 caractères)</li>
-            <li>Décrivez en détail ce que vous avez essayé (min. 30 caractères)</li>
-            <li>Incluez des blocs de code avec la syntaxe Markdown ```</li>
-            <li>Ajoutez entre 1 et 5 tags pertinents</li>
+            <li>Résumez {isQuestion ? "le problème" : "l'actualité"} dans le titre (min. 15 caractères)</li>
+            <li>{isQuestion ? "Décrivez en détail ce que vous avez essayé" : "Détaillez le contexte et les informations clés"} (min. 30 caractères)</li>
+            <li>Utilisez le Markdown et les blocs de code avec ```</li>
+            <li>{isQuestion ? "Ajoutez 1 à 5 tags pertinents" : "Ajoutez jusqu'à 5 tags (optionnel)"}</li>
           </ul>
         </div>
 
