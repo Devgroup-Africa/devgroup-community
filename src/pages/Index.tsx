@@ -3,18 +3,21 @@ import { useSearchParams } from "react-router-dom";
 import QuestionCard from "@/components/QuestionCard";
 import Layout from "@/components/Layout";
 import RightSidebar from "@/components/RightSidebar";
-import { Filter, Flame, Clock, TrendingUp, MessageSquare, Loader2 } from "lucide-react";
+import { Filter, Flame, Clock, TrendingUp, MessageSquare, Loader2, Newspaper, LayoutGrid } from "lucide-react";
 import { useQuestions, useTags } from "@/hooks/useData";
 
 type SortBy = "votes" | "recent" | "trending";
+type TypeFilter = "all" | "question" | "news";
 
 const Index = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tagFromUrl = searchParams.get("tag");
   const searchFromUrl = searchParams.get("search");
+  const typeFromUrl = (searchParams.get("type") as TypeFilter) || "all";
 
   const [activeTag, setActiveTag] = useState<string | null>(tagFromUrl);
   const [sortBy, setSortBy] = useState<SortBy>("recent");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(typeFromUrl);
 
   const { data: questions = [], isLoading } = useQuestions();
   const { data: tags = [] } = useTags();
