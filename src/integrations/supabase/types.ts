@@ -143,6 +143,7 @@ export type Database = {
           bookmarks: number
           created_at: string
           id: string
+          post_type: string
           title: string
           updated_at: string
           views: number
@@ -153,6 +154,7 @@ export type Database = {
           bookmarks?: number
           created_at?: string
           id?: string
+          post_type?: string
           title: string
           updated_at?: string
           views?: number
@@ -163,6 +165,7 @@ export type Database = {
           bookmarks?: number
           created_at?: string
           id?: string
+          post_type?: string
           title?: string
           updated_at?: string
           views?: number
@@ -374,6 +377,7 @@ export type Database = {
           bookmarks: number | null
           created_at: string | null
           id: string | null
+          post_type: string | null
           tags: string[] | null
           title: string | null
           updated_at: string | null
