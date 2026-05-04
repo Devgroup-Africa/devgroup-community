@@ -3,7 +3,7 @@ import { Navigate, NavLink, useLocation } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useRole";
-import { BarChart3, Users, Flag, Shield, MessageSquare, Tag, Loader2, ShieldAlert } from "lucide-react";
+import { BarChart3, Users, Flag, Shield, MessageSquare, Tag, Loader2, ShieldAlert, Map } from "lucide-react";
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
@@ -32,6 +32,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
     { to: "/admin/users", icon: Users, label: "Utilisateurs" },
     { to: "/admin/tags", icon: Tag, label: "Tags" },
     ...(isSuper ? [{ to: "/admin/admins", icon: Shield, label: "Admins" }] : []),
+    { to: "/admin/roadmap", icon: Map, label: "Roadmap" },
   ];
 
   return (

@@ -17,6 +17,7 @@ import AdminReports from "./pages/admin/AdminReports.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminTags from "./pages/admin/AdminTags.tsx";
 import AdminAdmins from "./pages/admin/AdminAdmins.tsx";
+import AdminRoadmap from "./pages/admin/AdminRoadmap.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/tags" element={<AdminTags />} />
             <Route path="/admin/admins" element={<AdminAdmins />} />
+            <Route path="/admin/roadmap" element={<AdminRoadmap />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
