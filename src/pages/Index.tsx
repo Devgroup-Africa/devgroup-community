@@ -9,6 +9,8 @@ import { useQuestions, useTags } from "@/hooks/useData";
 type SortBy = "votes" | "recent" | "trending";
 type TypeFilter = "all" | "question" | "news";
 
+const PAGE_SIZE = 10;
+
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tagFromUrl = searchParams.get("tag");
@@ -18,6 +20,7 @@ const Index = () => {
   const [activeTag, setActiveTag] = useState<string | null>(tagFromUrl);
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>(typeFromUrl);
+  const [page, setPage] = useState(1);
 
   const { data: questions = [], isLoading } = useQuestions();
   const { data: tags = [] } = useTags();
@@ -32,12 +35,14 @@ const Index = () => {
 
   const updateType = (t: TypeFilter) => {
     setTypeFilter(t);
+    setPage(1);
     const params = new URLSearchParams(searchParams);
     if (t === "all") params.delete("type"); else params.set("type", t);
     setSearchParams(params, { replace: true });
   };
 
   const filtered = useMemo(() => {
+    setPage(1);
     return questions
       .filter((q) => typeFilter === "all" || q.post_type === typeFilter)
       .filter((q) => !activeTag || q.tags.includes(activeTag))
@@ -59,6 +64,9 @@ const Index = () => {
   }, [questions, activeTag, searchFromUrl, sortBy, typeFilter]);
 
   const popularTags = tags.slice(0, 12);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <Layout>
@@ -169,7 +177,7 @@ const Index = () => {
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {filtered.map((q) => (
+              {paginated.map((q) => (
                 <QuestionCard key={q.id} question={q} />
               ))}
             </div>
@@ -182,6 +190,51 @@ const Index = () => {
               <p className="text-sm text-muted-foreground mt-1">
                 Soyez le premier à poser une question !
               </p>
+            </div>
+          )}
+
+          {!isLoading && totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <button
+                onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                disabled={page === 1}
+                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ← Précédent
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                  .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${i}`} className="px-1 text-muted-foreground text-sm">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                          page === p
+                            ? "bg-primary text-primary-foreground"
+                            : "border border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+              </div>
+              <button
+                onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                disabled={page === totalPages}
+                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Suivant →
+              </button>
             </div>
           )}
         </div>

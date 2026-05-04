@@ -13,6 +13,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  
+  const isAdminPage = location.pathname.startsWith("/admin");
+  const isAuthPage = location.pathname === "/auth";
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -182,38 +185,82 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       <main className="container py-6 flex-1">{children}</main>
 
-      <footer className="border-t border-border bg-card/95 backdrop-blur-sm mt-auto">
-        <div className="container py-6">
-          <div className="flex flex-col items-center gap-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
-              <div className="flex items-center gap-2">
-                <img src="/logo-vert.png" alt="DevGroup Community" className="h-6 w-auto" />
-                <span className="font-mono text-sm font-bold text-foreground">DevGroup Community</span>
+      {!isAdminPage && !isAuthPage && (
+        <footer className="border-t border-border bg-card mt-auto">
+          <div className="container py-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+
+              {/* Colonne marque */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <img src="/logo-vert.png" alt="DevGroup Community" className="h-7 w-auto" />
+                  <span className="font-mono text-sm font-bold text-foreground">DevGroup Community</span>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  La plateforme communautaire de questions-réponses dédiée aux développeurs du monde entier.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Une initiative de{" "}
+                  <a
+                    href="https://devgroup.ga"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    DevGroup Africa
+                  </a>
+                </p>
               </div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <Link to="/" className="hover:text-foreground transition-colors">Questions</Link>
-                <Link to="/tags" className="hover:text-foreground transition-colors">Tags</Link>
-                <Link to="/users" className="hover:text-foreground transition-colors">Utilisateurs</Link>
+
+              {/* Colonne communauté */}
+              <div className="flex flex-col gap-3">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Communauté</h3>
+                <ul className="flex flex-col gap-2">
+                  <li><Link to="/" className="text-sm text-foreground/70 hover:text-foreground transition-colors">Questions</Link></li>
+                  <li><Link to="/?type=news" className="text-sm text-foreground/70 hover:text-foreground transition-colors">Actualités</Link></li>
+                  <li><Link to="/tags" className="text-sm text-foreground/70 hover:text-foreground transition-colors">Tags</Link></li>
+                  <li><Link to="/users" className="text-sm text-foreground/70 hover:text-foreground transition-colors">Membres</Link></li>
+                </ul>
               </div>
+
+              {/* Colonne participer */}
+              <div className="flex flex-col gap-3">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Participer</h3>
+                <ul className="flex flex-col gap-2">
+                  <li><Link to="/ask" className="text-sm text-foreground/70 hover:text-foreground transition-colors">Poser une question</Link></li>
+                  <li><Link to="/auth" className="text-sm text-foreground/70 hover:text-foreground transition-colors">Créer un compte</Link></li>
+                  <li><Link to="/auth" className="text-sm text-foreground/70 hover:text-foreground transition-colors">Se connecter</Link></li>
+                </ul>
+              </div>
+
+              {/* Colonne ressources */}
+              <div className="flex flex-col gap-3">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Ressources</h3>
+                <ul className="flex flex-col gap-2">
+                  <li>
+                    <a href="https://devgroup.ga" target="_blank" rel="noopener noreferrer" className="text-sm text-foreground/70 hover:text-foreground transition-colors">
+                      DevGroup Africa
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
             </div>
-            
-            <div className="w-full border-t border-border pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
-              <p>© 2026 DevGroup Community. Tous droits réservés.</p>
-              <p className="flex items-center gap-1">
-                Développé avec ❤️ par{" "}
-                <a 
-                  href="https://devgroup.ga" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="font-semibold text-primary hover:underline transition-colors"
-                >
-                  DevGroup Africa
-                </a>
+          </div>
+
+          {/* Barre de bas de page */}
+          <div className="border-t border-border">
+            <div className="container py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                © {new Date().getFullYear()} DevGroup Community. Tous droits réservés.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Construit pour les développeurs d'Afrique et d'ailleurs.
               </p>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 };
