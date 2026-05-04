@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Code2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const Auth = () => {
@@ -56,10 +56,8 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-fade-in">
         <Link to="/" className="flex items-center justify-center gap-2 mb-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
-            <Code2 className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="font-mono text-xl font-bold text-foreground">DevFlow</span>
+          <img src="/logo-vert.png" alt="DevGroup Community" className="h-9 w-auto" />
+          <span className="font-mono text-xl font-bold text-foreground">DevGroup Community</span>
         </Link>
 
         <div className="rounded-lg border border-border bg-card p-6">
@@ -85,7 +83,7 @@ const Auth = () => {
           </div>
 
           <h1 className="text-lg font-bold font-mono text-foreground mb-1">
-            {mode === "signin" ? "Bon retour !" : "Rejoindre DevFlow"}
+            {mode === "signin" ? "Bon retour !" : "Rejoindre DevGroup Community"}
           </h1>
           <p className="text-xs text-muted-foreground mb-5">
             {mode === "signin"
