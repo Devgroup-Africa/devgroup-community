@@ -47,7 +47,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-xl">
         <div className="container flex h-14 items-center gap-3">
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src="/logo vert.png" alt="DevGroup Community" className="h-8 w-auto" />
+            <img src="/logo-vert.png" alt="DevGroup Community" className="h-8 w-auto" />
             <span className="font-mono text-lg font-bold text-foreground hidden sm:inline">
               DevGroup Community
             </span>
@@ -187,7 +187,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex flex-col items-center gap-6">
             <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
               <div className="flex items-center gap-2">
-                <img src="/logo vert.png" alt="DevGroup Community" className="h-6 w-auto" />
+                <img src="/logo-vert.png" alt="DevGroup Community" className="h-6 w-auto" />
                 <span className="font-mono text-sm font-bold text-foreground">DevGroup Community</span>
               </div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
