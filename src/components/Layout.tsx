@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Code2, MessageSquare, Plus, Search, TrendingUp, Users, Menu, X, LogOut, LogIn, User as UserIcon, Shield, Newspaper, Sun, Moon } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { MessageSquare, Plus, Search, TrendingUp, Users, Menu, X, LogOut, LogIn, User as UserIcon, Shield, Newspaper, Sun, Moon, Palette } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useRole";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -11,10 +11,34 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, signOut } = useAuth();
   const { data: role } = useUserRole();
   const isAdmin = role === "admin" || role === "super_admin";
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, accentColor, setAccentColor } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+
+  // Close color picker on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+        setColorPickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const PRESET_COLORS = [
+    { label: "Vert", value: "#10b981" },
+    { label: "Bleu", value: "#3b82f6" },
+    { label: "Violet", value: "#8b5cf6" },
+    { label: "Rose", value: "#ec4899" },
+    { label: "Orange", value: "#f97316" },
+    { label: "Rouge", value: "#ef4444" },
+    { label: "Cyan", value: "#06b6d4" },
+    { label: "Jaune", value: "#eab308" },
+  ];
   
   const isAdminPage = location.pathname.startsWith("/admin");
   const isAuthPage = location.pathname === "/auth";
@@ -145,6 +169,45 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               Connexion
             </Link>
           )}
+
+          {/* Color picker */}
+          <div className="relative" ref={colorPickerRef}>
+            <button
+              onClick={() => setColorPickerOpen(!colorPickerOpen)}
+              className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              aria-label="Changer la couleur d'accent"
+            >
+              <Palette className="h-5 w-5" style={{ color: accentColor }} />
+            </button>
+            {colorPickerOpen && (
+              <div className="absolute right-0 top-full mt-1 w-52 rounded-md border border-border bg-card shadow-lg p-3 animate-fade-in z-50">
+                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Couleur d'accent</p>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      title={c.label}
+                      onClick={() => { setAccentColor(c.value); setColorPickerOpen(false); }}
+                      className="h-7 w-7 rounded-full border-2 transition-transform hover:scale-110"
+                      style={{
+                        backgroundColor: c.value,
+                        borderColor: accentColor === c.value ? "white" : "transparent",
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground">Personnalisé</label>
+                  <input
+                    type="color"
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="h-7 w-10 cursor-pointer rounded border border-border bg-transparent"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={toggleTheme}
