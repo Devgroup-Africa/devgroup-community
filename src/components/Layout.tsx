@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useRole";
 import { useTheme } from "@/contexts/ThemeContext";
+import NotificationBell from "./NotificationBell";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -118,6 +119,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Publier</span>
           </Link>
+
+          {user && profile && <NotificationBell />}
 
           {user && profile ? (
             <div className="relative">
