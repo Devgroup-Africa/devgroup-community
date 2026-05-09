@@ -365,6 +365,12 @@ const QuestionDetail = () => {
                             </span>
                           )}
                         </div>
+                        <CommentList
+                          targetType="answer"
+                          targetId={answer.id}
+                          questionId={question.id}
+                          parentAuthorId={answer.author_id}
+                        />
                       </div>
                     </div>
                   </div>
@@ -382,11 +388,12 @@ const QuestionDetail = () => {
                 </div>
               )}
               <form onSubmit={handleSubmitAnswer}>
-                <textarea
+                <MentionTextarea
                   value={answerBody}
-                  onChange={(e) => setAnswerBody(e.target.value)}
+                  onChange={setAnswerBody}
                   disabled={!user}
-                  placeholder="Écrivez votre réponse... (Markdown supporté, blocs de code avec ```)"
+                  rows={6}
+                  placeholder="Écrivez votre réponse... (Markdown supporté, @ pour mentionner)"
                   className="w-full h-32 rounded-md border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y transition-colors font-mono disabled:opacity-50"
                 />
                 <button
