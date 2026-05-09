@@ -12,6 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { timeAgo } from "@/lib/timeAgo";
+import CommentList from "@/components/CommentList";
+import MentionTextarea from "@/components/MentionTextarea";
+import { extractMentions, resolveMentions } from "@/lib/mentions";
+import { notify, notifyMany } from "@/lib/notify";
 
 const QuestionDetail = () => {
   const { id } = useParams();
@@ -85,8 +89,7 @@ const QuestionDetail = () => {
 
   const isQuestionAuthor = user?.id === question.author_id;
 
-  const handleAcceptAnswer = async (answerId: string, currentlyAccepted: boolean) => {
-    // Unaccept all answers for this question, then accept the chosen one
+  const handleAcceptAnswer = async (answerId: string, currentlyAccepted: boolean, answerAuthorId: string) => {
     await supabase.from("answers").update({ accepted: false }).eq("question_id", question.id);
     if (!currentlyAccepted) {
       const { error } = await supabase.from("answers").update({ accepted: true }).eq("id", answerId);
@@ -95,6 +98,16 @@ const QuestionDetail = () => {
         return;
       }
       toast.success("Réponse acceptée !");
+      if (user && answerAuthorId !== user.id) {
+        notify({
+          user_id: answerAuthorId,
+          actor_id: user.id,
+          type: "accepted",
+          target_type: "answer",
+          target_id: answerId,
+          question_id: question.id,
+        });
+      }
     }
     qc.invalidateQueries({ queryKey: ["answers", question.id] });
   };
@@ -110,16 +123,48 @@ const QuestionDetail = () => {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("answers").insert({
-      question_id: question.id,
-      author_id: user.id,
-      body: answerBody.trim(),
-    });
+    const { data: inserted, error } = await supabase
+      .from("answers")
+      .insert({
+        question_id: question.id,
+        author_id: user.id,
+        body: answerBody.trim(),
+      })
+      .select("id")
+      .single();
     setSubmitting(false);
     if (error) {
       toast.error("Impossible de publier la réponse.");
       return;
     }
+    // Notify question author
+    if (question.author_id !== user.id) {
+      notify({
+        user_id: question.author_id,
+        actor_id: user.id,
+        type: "answer",
+        target_type: "answer",
+        target_id: inserted.id,
+        question_id: question.id,
+        payload: { excerpt: answerBody.trim().slice(0, 120) },
+      });
+    }
+    // Notify mentioned users
+    const mentions = extractMentions(answerBody);
+    const mentioned = await resolveMentions(mentions);
+    await notifyMany(
+      mentioned
+        .filter((m) => m.id !== user.id && m.id !== question.author_id)
+        .map((m) => ({
+          user_id: m.id,
+          actor_id: user.id,
+          type: "mention" as const,
+          target_type: "answer" as const,
+          target_id: inserted.id,
+          question_id: question.id,
+          payload: { excerpt: answerBody.trim().slice(0, 120) },
+        }))
+    );
     setAnswerBody("");
     toast.success("Réponse publiée !");
     qc.invalidateQueries({ queryKey: ["answers", question.id] });
