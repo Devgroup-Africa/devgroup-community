@@ -12,6 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { timeAgo } from "@/lib/timeAgo";
+import CommentList from "@/components/CommentList";
+import MentionTextarea from "@/components/MentionTextarea";
+import { extractMentions, resolveMentions } from "@/lib/mentions";
+import { notify, notifyMany } from "@/lib/notify";
 
 const QuestionDetail = () => {
   const { id } = useParams();
@@ -85,8 +89,7 @@ const QuestionDetail = () => {
 
   const isQuestionAuthor = user?.id === question.author_id;
 
-  const handleAcceptAnswer = async (answerId: string, currentlyAccepted: boolean) => {
-    // Unaccept all answers for this question, then accept the chosen one
+  const handleAcceptAnswer = async (answerId: string, currentlyAccepted: boolean, answerAuthorId: string) => {
     await supabase.from("answers").update({ accepted: false }).eq("question_id", question.id);
     if (!currentlyAccepted) {
       const { error } = await supabase.from("answers").update({ accepted: true }).eq("id", answerId);
@@ -95,6 +98,16 @@ const QuestionDetail = () => {
         return;
       }
       toast.success("Réponse acceptée !");
+      if (user && answerAuthorId !== user.id) {
+        notify({
+          user_id: answerAuthorId,
+          actor_id: user.id,
+          type: "accepted",
+          target_type: "answer",
+          target_id: answerId,
+          question_id: question.id,
+        });
+      }
     }
     qc.invalidateQueries({ queryKey: ["answers", question.id] });
   };
@@ -110,16 +123,48 @@ const QuestionDetail = () => {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("answers").insert({
-      question_id: question.id,
-      author_id: user.id,
-      body: answerBody.trim(),
-    });
+    const { data: inserted, error } = await supabase
+      .from("answers")
+      .insert({
+        question_id: question.id,
+        author_id: user.id,
+        body: answerBody.trim(),
+      })
+      .select("id")
+      .single();
     setSubmitting(false);
     if (error) {
       toast.error("Impossible de publier la réponse.");
       return;
     }
+    // Notify question author
+    if (question.author_id !== user.id) {
+      notify({
+        user_id: question.author_id,
+        actor_id: user.id,
+        type: "answer",
+        target_type: "answer",
+        target_id: inserted.id,
+        question_id: question.id,
+        payload: { excerpt: answerBody.trim().slice(0, 120) },
+      });
+    }
+    // Notify mentioned users
+    const mentions = extractMentions(answerBody);
+    const mentioned = await resolveMentions(mentions);
+    await notifyMany(
+      mentioned
+        .filter((m) => m.id !== user.id && m.id !== question.author_id)
+        .map((m) => ({
+          user_id: m.id,
+          actor_id: user.id,
+          type: "mention" as const,
+          target_type: "answer" as const,
+          target_id: inserted.id,
+          question_id: question.id,
+          payload: { excerpt: answerBody.trim().slice(0, 120) },
+        }))
+    );
     setAnswerBody("");
     toast.success("Réponse publiée !");
     qc.invalidateQueries({ queryKey: ["answers", question.id] });
@@ -214,6 +259,13 @@ const QuestionDetail = () => {
                       Partager
                     </button>
                   </div>
+
+                  <CommentList
+                    targetType="question"
+                    targetId={question.id}
+                    questionId={question.id}
+                    parentAuthorId={question.author_id}
+                  />
                 </div>
               </div>
             </div>
@@ -267,7 +319,7 @@ const QuestionDetail = () => {
                         <VoteButton totalVotes={answer.votes} targetType="answer" targetId={answer.id} />
                         {isQuestionAuthor ? (
                           <button
-                            onClick={() => handleAcceptAnswer(answer.id, answer.accepted)}
+                            onClick={() => handleAcceptAnswer(answer.id, answer.accepted, answer.author_id)}
                             title={answer.accepted ? "Retirer l'acceptation" : "Accepter cette réponse"}
                             className={`rounded-md p-1 transition-colors ${
                               answer.accepted
@@ -292,7 +344,7 @@ const QuestionDetail = () => {
                           )}
                           {isQuestionAuthor && !answer.accepted && (
                             <button
-                              onClick={() => handleAcceptAnswer(answer.id, false)}
+                              onClick={() => handleAcceptAnswer(answer.id, false, answer.author_id)}
                               className="text-xs text-muted-foreground hover:text-primary"
                             >
                               Accepter
@@ -320,6 +372,12 @@ const QuestionDetail = () => {
                             </span>
                           )}
                         </div>
+                        <CommentList
+                          targetType="answer"
+                          targetId={answer.id}
+                          questionId={question.id}
+                          parentAuthorId={answer.author_id}
+                        />
                       </div>
                     </div>
                   </div>
@@ -337,11 +395,12 @@ const QuestionDetail = () => {
                 </div>
               )}
               <form onSubmit={handleSubmitAnswer}>
-                <textarea
+                <MentionTextarea
                   value={answerBody}
-                  onChange={(e) => setAnswerBody(e.target.value)}
+                  onChange={setAnswerBody}
                   disabled={!user}
-                  placeholder="Écrivez votre réponse... (Markdown supporté, blocs de code avec ```)"
+                  rows={6}
+                  placeholder="Écrivez votre réponse... (Markdown supporté, @ pour mentionner)"
                   className="w-full h-32 rounded-md border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y transition-colors font-mono disabled:opacity-50"
                 />
                 <button

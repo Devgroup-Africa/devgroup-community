@@ -44,10 +44,10 @@ const ROADMAP: Section[] = [
     title: "Interactions sociales directes",
     subtitle: "Faire échanger les utilisateurs au-delà du Q&A",
     features: [
-      { name: "Commentaires sous questions et réponses", status: "todo", details: "Format court (≤ 600 caractères), pour préciser, remercier, nuancer. Différent d'une vraie réponse." },
-      { name: "Mentions @username", status: "todo", details: "Auto-complétion dans commentaires/réponses, lien vers profil, déclenche une notification." },
-      { name: "Système de notifications (cloche)", status: "todo", details: "Nouvelle réponse, mention, réponse acceptée, badge obtenu, vote significatif. Centre de notifications + non-lus." },
-      { name: "Suivre un utilisateur", status: "todo", details: "Bouton Suivre sur le profil, flux personnalisé sur la home (onglet 'Suivis')." },
+      { name: "Commentaires sous questions et réponses", status: "done", details: "Format court (≤ 600 caractères) avec mentions @, suppression par auteur ou admin." },
+      { name: "Mentions @username", status: "done", details: "Auto-complétion dans commentaires et réponses, lien vers profil, déclenche une notification." },
+      { name: "Système de notifications (cloche)", status: "done", details: "Cloche dans le header avec compteur non-lus, dropdown détaillé, marquage lu individuel ou global, mises à jour temps réel." },
+      { name: "Suivre un utilisateur", status: "done", details: "Bouton Suivre sur le profil avec compteurs Abonnés/Suivis, onglet 'Suivis' sur la home pour filtrer le flux." },
     ],
   },
   {

@@ -9,12 +9,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/timeAgo";
+import FollowButton from "@/components/FollowButton";
+import { useFollowCounts } from "@/hooks/useFollow";
 
 const UserProfile = () => {
   const { id } = useParams();
   const { user, refreshProfile } = useAuth();
   const qc = useQueryClient();
   const { data: profile, isLoading } = useProfile(id);
+  const { data: counts } = useFollowCounts(id);
   const { data: questions = [] } = useQuestions();
   const [tab, setTab] = useState<"questions" | "answers">("questions");
   const [editing, setEditing] = useState(false);
@@ -119,6 +122,7 @@ const UserProfile = () => {
                     Éditer
                   </button>
                 )}
+                {!isOwn && <FollowButton userId={profile.id} />}
               </div>
 
               {editing ? (
@@ -177,6 +181,16 @@ const UserProfile = () => {
               <div>
                 <p className="text-2xl font-bold font-mono text-primary">{formatReputation(profile.reputation)}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Réputation</p>
+              </div>
+              <div className="flex sm:flex-col gap-3 sm:gap-1.5">
+                <div className="text-center sm:text-right">
+                  <p className="text-sm font-bold font-mono text-foreground">{counts?.followers ?? 0}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Abonnés</p>
+                </div>
+                <div className="text-center sm:text-right">
+                  <p className="text-sm font-bold font-mono text-foreground">{counts?.following ?? 0}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Suivis</p>
+                </div>
               </div>
             </div>
           </div>
