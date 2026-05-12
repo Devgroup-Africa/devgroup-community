@@ -4,13 +4,13 @@ import QuestionCard from "@/components/QuestionCard";
 import Layout from "@/components/Layout";
 import RightSidebar from "@/components/RightSidebar";
 import WelcomeBanner from "@/components/WelcomeBanner";
-import { Filter, Flame, Clock, TrendingUp, MessageSquare, Loader2, Newspaper, LayoutGrid, UserCheck } from "lucide-react";
+import { Filter, Flame, Clock, TrendingUp, MessageSquare, Loader2, Newspaper, LayoutGrid, UserCheck, MessagesSquare } from "lucide-react";
 import { useQuestions, useTags } from "@/hooks/useData";
 import { useFollowingIds } from "@/hooks/useFollow";
 import { useAuth } from "@/contexts/AuthContext";
 
 type SortBy = "votes" | "recent" | "trending";
-type TypeFilter = "all" | "question" | "news" | "following";
+type TypeFilter = "all" | "question" | "news" | "discussion" | "following";
 
 const PAGE_SIZE = 10;
 
@@ -130,6 +130,8 @@ const Index = () => {
                   <><span className="text-primary">#</span>{activeTag}</>
                 ) : typeFilter === "news" ? (
                   "Actualités"
+                ) : typeFilter === "discussion" ? (
+                  "Discussions"
                 ) : typeFilter === "question" ? (
                   "Questions"
                 ) : (
@@ -137,13 +139,14 @@ const Index = () => {
                 )}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {filtered.length} {typeFilter === "news" ? "actualité" : "publication"}{filtered.length > 1 ? "s" : ""}
+                {filtered.length} {typeFilter === "news" ? "actualité" : typeFilter === "discussion" ? "discussion" : "publication"}{filtered.length > 1 ? "s" : ""}
               </p>
 
               <div className="mt-3 flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
                 {([
                   { key: "all" as TypeFilter, icon: LayoutGrid, label: "Tout", show: true },
                   { key: "question" as TypeFilter, icon: MessageSquare, label: "Questions", show: true },
+                  { key: "discussion" as TypeFilter, icon: MessagesSquare, label: "Discussions", show: true },
                   { key: "news" as TypeFilter, icon: Newspaper, label: "News", show: true },
                   { key: "following" as TypeFilter, icon: UserCheck, label: "Suivis", show: !!user },
                 ]).filter((b) => b.show).map(({ key, icon: Icon, label }) => (
