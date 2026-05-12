@@ -69,9 +69,9 @@ const ROADMAP: Section[] = [
     title: "Vie de communauté",
     subtitle: "Transformer la plateforme en lieu où l'on revient",
     features: [
-      { name: "Discussions / Forum", status: "todo", details: "3e type de post (à côté de Question et News) pour débats, show & tell, retours d'expérience." },
-      { name: "Sondages", status: "todo", details: "Intégrés aux news ou discussions. 2-6 options, vote unique, résultats live." },
-      { name: "Page Communauté", status: "todo", details: "Règles, valeurs, équipe, code de conduite. Donne une âme à la plateforme." },
+      { name: "Discussions / Forum", status: "done", details: "3e type de post (à côté de Question et News) pour débats, show & tell, retours d'expérience. Filtrable depuis la home et le menu." },
+      { name: "Sondages", status: "done", details: "Intégrés aux discussions et news. 2-6 options, vote unique, date de clôture optionnelle, résultats live. Vote modifiable tant que le sondage est ouvert." },
+      { name: "Page Communauté", status: "done", details: "Page /community : valeurs, code de conduite (do/don't), comment contribuer. Donne une âme à la plateforme." },
       { name: "Événements (meetups, lives, hackathons)", status: "future", details: "Perspective d'évolution. Inscription, rappels, calendrier." },
       { name: "Digest hebdomadaire par email", status: "future", details: "Perspective d'évolution. Top questions, top contributeurs, news. Nécessite domaine email vérifié." },
     ],
