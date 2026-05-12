@@ -250,13 +250,84 @@ const AskQuestion = () => {
             )}
           </div>
 
+          {/* Optional poll for news/discussion */}
+          {!isQuestion && (
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={pollEnabled}
+                  onChange={(e) => setPollEnabled(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                <BarChart3 className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">Ajouter un sondage</span>
+              </label>
+              {pollEnabled && (
+                <div className="space-y-3 pl-6">
+                  <input
+                    type="text"
+                    value={pollTitle}
+                    onChange={(e) => setPollTitle(e.target.value)}
+                    placeholder="Question du sondage"
+                    className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <div className="space-y-2">
+                    {pollOptions.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const next = [...pollOptions];
+                            next[i] = e.target.value;
+                            setPollOptions(next);
+                          }}
+                          placeholder={`Option ${i + 1}`}
+                          className="flex-1 rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        {pollOptions.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {pollOptions.length < 6 && (
+                      <button
+                        type="button"
+                        onClick={() => setPollOptions([...pollOptions, ""])}
+                        className="flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        <Plus className="h-3 w-3" /> Ajouter une option
+                      </button>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Date de clôture (optionnel)</label>
+                    <input
+                      type="datetime-local"
+                      value={pollEndsAt}
+                      onChange={(e) => setPollEndsAt(e.target.value)}
+                      className="rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
               disabled={!isValid || submitting}
               className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Publication…" : isQuestion ? "Publier la question" : "Publier l'actualité"}
+              {submitting ? "Publication…" : `Publier la ${typeLabel}`}
             </button>
             <button
               type="button"
