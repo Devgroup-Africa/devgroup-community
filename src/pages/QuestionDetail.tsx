@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { timeAgo } from "@/lib/timeAgo";
 import CommentList from "@/components/CommentList";
 import MentionTextarea from "@/components/MentionTextarea";
+import PollBlock from "@/components/PollBlock";
 import { extractMentions, resolveMentions } from "@/lib/mentions";
 import { notify, notifyMany } from "@/lib/notify";
 
@@ -225,6 +226,8 @@ const QuestionDetail = () => {
                   <div className="mt-4 text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
                     {renderBody(question.body)}
                   </div>
+
+                  <PollBlock questionId={question.id} />
 
                   <div className="mt-4 flex flex-wrap gap-1.5">
                     {question.tags.map((tag) => (
