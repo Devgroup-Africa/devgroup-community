@@ -61,12 +61,39 @@ const AskQuestion = () => {
       const rows = selectedTags.map((tag_name) => ({ question_id: data.id, tag_name }));
       await supabase.from("question_tags").insert(rows);
     }
+    // Optional poll
+    if (pollEnabled && postType !== "question") {
+      const cleanOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
+      if (pollTitle.trim() && cleanOptions.length >= 2) {
+        const { data: poll } = await supabase
+          .from("polls")
+          .insert({
+            question_id: data.id,
+            author_id: user.id,
+            title: pollTitle.trim(),
+            ends_at: pollEndsAt ? new Date(pollEndsAt).toISOString() : null,
+          })
+          .select("id")
+          .single();
+        if (poll) {
+          await supabase.from("poll_options").insert(
+            cleanOptions.map((label, i) => ({ poll_id: poll.id, label, position: i }))
+          );
+        }
+      }
+    }
     setSubmitting(false);
-    toast.success(postType === "news" ? "Actualité publiée !" : "Question publiée !");
+    toast.success(
+      postType === "news" ? "Actualité publiée !" :
+      postType === "discussion" ? "Discussion publiée !" :
+      "Question publiée !"
+    );
     navigate(`/question/${data.id}`);
   };
 
   const isQuestion = postType === "question";
+  const isDiscussion = postType === "discussion";
+  const typeLabel = postType === "news" ? "actualité" : postType === "discussion" ? "discussion" : "question";
   const isValid =
     title.trim().length >= 15 &&
     body.trim().length >= 30 &&
@@ -96,17 +123,20 @@ const AskQuestion = () => {
     <Layout>
       <div className="max-w-3xl mx-auto animate-fade-in">
         <h1 className="text-2xl font-bold font-mono text-foreground mb-1">
-          {isQuestion ? "Poser une question" : "Publier une actualité"}
+          {isQuestion ? "Poser une question" : isDiscussion ? "Lancer une discussion" : "Publier une actualité"}
         </h1>
         <p className="text-sm text-muted-foreground mb-4">
           {isQuestion
             ? "Décrivez votre problème clairement pour obtenir les meilleures réponses."
+            : isDiscussion
+            ? "Lancez un débat, un retour d'expérience ou un show & tell avec la communauté."
             : "Partagez une actualité, une annonce ou un événement avec la communauté."}
         </p>
 
         <div className="mb-6 inline-flex items-center gap-1 rounded-lg bg-muted p-1">
           {([
             { key: "question" as PostType, icon: MessageSquare, label: "Question" },
+            { key: "discussion" as PostType, icon: MessagesSquare, label: "Discussion" },
             { key: "news" as PostType, icon: Newspaper, label: "Actualité" },
           ]).map(({ key, icon: Icon, label }) => (
             <button
@@ -128,13 +158,14 @@ const AskQuestion = () => {
         <div className="rounded-lg border border-border bg-primary/5 p-4 mb-6">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
             <Info className="h-4 w-4 text-primary" />
-            {isQuestion ? "Comment poser une bonne question" : "Comment rédiger une bonne actualité"}
+            {isQuestion ? "Comment poser une bonne question" : isDiscussion ? "Comment lancer une bonne discussion" : "Comment rédiger une bonne actualité"}
           </h3>
           <ul className="text-xs text-muted-foreground space-y-1.5 ml-5 list-disc">
-            <li>Résumez {isQuestion ? "le problème" : "l'actualité"} dans le titre (min. 15 caractères)</li>
-            <li>{isQuestion ? "Décrivez en détail ce que vous avez essayé" : "Détaillez le contexte et les informations clés"} (min. 30 caractères)</li>
+            <li>Résumez {isQuestion ? "le problème" : isDiscussion ? "le sujet" : "l'actualité"} dans le titre (min. 15 caractères)</li>
+            <li>{isQuestion ? "Décrivez en détail ce que vous avez essayé" : isDiscussion ? "Donnez du contexte et lancez le débat avec une vraie question ouverte" : "Détaillez le contexte et les informations clés"} (min. 30 caractères)</li>
             <li>Utilisez le Markdown et les blocs de code avec ```</li>
             <li>{isQuestion ? "Ajoutez 1 à 5 tags pertinents" : "Ajoutez jusqu'à 5 tags (optionnel)"}</li>
+            {!isQuestion && <li>Vous pouvez ajouter un sondage pour recueillir l'avis de la communauté</li>}
           </ul>
         </div>
 
