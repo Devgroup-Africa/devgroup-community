@@ -52,9 +52,15 @@ const items: Item[] = [
     isActive: (p) => p === "/badges",
   },
   {
+    to: "/communities",
+    icon: Users,
+    label: "Communautés",
+    isActive: (p) => p === "/communities" || p.startsWith("/communities/"),
+  },
+  {
     to: "/community",
     icon: Heart,
-    label: "Communauté",
+    label: "Charte",
     isActive: (p) => p === "/community",
   },
 ];

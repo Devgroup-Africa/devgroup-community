@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useTags } from "@/hooks/useData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,8 @@ type PostType = "question" | "news" | "discussion";
 
 const AskQuestion = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const communityId = params.get("community");
   const { user } = useAuth();
   const { data: tags = [] } = useTags();
 
@@ -49,7 +51,7 @@ const AskQuestion = () => {
     setSubmitting(true);
     const { data, error } = await supabase
       .from("questions")
-      .insert({ author_id: user.id, title: title.trim(), body: body.trim(), post_type: postType } as any)
+      .insert({ author_id: user.id, title: title.trim(), body: body.trim(), post_type: postType, community_id: communityId || null } as any)
       .select("id")
       .single();
     if (error || !data) {

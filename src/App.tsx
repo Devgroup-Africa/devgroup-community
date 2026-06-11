@@ -21,6 +21,8 @@ import AdminAdmins from "./pages/admin/AdminAdmins.tsx";
 import AdminRoadmap from "./pages/admin/AdminRoadmap.tsx";
 import Badges from "./pages/Badges.tsx";
 import Community from "./pages/Community.tsx";
+import Communities from "./pages/Communities.tsx";
+import CommunityDetail from "./pages/CommunityDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,6 +44,8 @@ const App = () => (
               <Route path="/users" element={<Users />} />
               <Route path="/badges" element={<Badges />} />
               <Route path="/community" element={<Community />} />
+              <Route path="/communities" element={<Communities />} />
+              <Route path="/communities/:slug" element={<CommunityDetail />} />
               <Route path="/user/:id" element={<UserProfile />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/content" element={<AdminContent />} />
