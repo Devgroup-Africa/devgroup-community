@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { timeAgo } from "@/lib/timeAgo";
 import CommentList from "@/components/CommentList";
+import ReportButton from "@/components/ReportButton";
 import MentionTextarea from "@/components/MentionTextarea";
 import PollBlock from "@/components/PollBlock";
 import { extractMentions, resolveMentions } from "@/lib/mentions";
