@@ -4,8 +4,8 @@ import QuestionCard from "@/components/QuestionCard";
 import Layout from "@/components/Layout";
 import RightSidebar from "@/components/RightSidebar";
 import WelcomeBanner from "@/components/WelcomeBanner";
-import { Filter, Flame, Clock, TrendingUp, MessageSquare, Loader2, Newspaper, LayoutGrid, UserCheck, MessagesSquare } from "lucide-react";
-import { useQuestions, useTags } from "@/hooks/useData";
+import { Flame, Clock, TrendingUp, MessageSquare, Loader2, Newspaper, LayoutGrid, UserCheck, MessagesSquare } from "lucide-react";
+import { useQuestions } from "@/hooks/useData";
 import { useFollowingIds } from "@/hooks/useFollow";
 import { useAuth } from "@/contexts/AuthContext";
 
