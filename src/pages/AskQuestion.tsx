@@ -11,6 +11,8 @@ type PostType = "question" | "news" | "discussion";
 
 const AskQuestion = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const communityId = params.get("community");
   const { user } = useAuth();
   const { data: tags = [] } = useTags();
 
