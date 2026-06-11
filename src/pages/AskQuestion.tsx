@@ -51,7 +51,7 @@ const AskQuestion = () => {
     setSubmitting(true);
     const { data, error } = await supabase
       .from("questions")
-      .insert({ author_id: user.id, title: title.trim(), body: body.trim(), post_type: postType } as any)
+      .insert({ author_id: user.id, title: title.trim(), body: body.trim(), post_type: postType, community_id: communityId || null } as any)
       .select("id")
       .single();
     if (error || !data) {
