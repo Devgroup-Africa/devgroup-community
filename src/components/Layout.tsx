@@ -202,7 +202,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground transition-colors"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
