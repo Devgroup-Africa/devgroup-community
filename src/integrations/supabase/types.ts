@@ -123,6 +123,77 @@ export type Database = {
         }
         Relationships: []
       }
+      communities: {
+        Row: {
+          avatar: string | null
+          banner_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_private: boolean
+          member_count: number
+          name: string
+          owner_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          avatar?: string | null
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_private?: boolean
+          member_count?: number
+          name: string
+          owner_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string | null
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_private?: boolean
+          member_count?: number
+          name?: string
+          owner_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_members: {
+        Row: {
+          community_id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["community_role"]
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -368,6 +439,7 @@ export type Database = {
           author_id: string
           body: string
           bookmarks: number
+          community_id: string | null
           created_at: string
           id: string
           post_type: string
@@ -379,6 +451,7 @@ export type Database = {
           author_id: string
           body: string
           bookmarks?: number
+          community_id?: string | null
           created_at?: string
           id?: string
           post_type?: string
@@ -390,6 +463,7 @@ export type Database = {
           author_id?: string
           body?: string
           bookmarks?: number
+          community_id?: string | null
           created_at?: string
           id?: string
           post_type?: string
@@ -403,6 +477,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -650,6 +731,10 @@ export type Database = {
     }
     Functions: {
       award_badges: { Args: { _user_id: string }; Returns: undefined }
+      community_role_of: {
+        Args: { _community_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["community_role"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -659,10 +744,19 @@ export type Database = {
       }
       heartbeat: { Args: never; Returns: undefined }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_community_member: {
+        Args: { _community_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_community_staff: {
+        Args: { _community_id: string; _user_id: string }
+        Returns: boolean
+      }
       recompute_reputation: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "user" | "admin" | "super_admin"
+      community_role: "member" | "moderator" | "admin"
       vote_target: "question" | "answer"
     }
     CompositeTypes: {
@@ -792,6 +886,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin", "super_admin"],
+      community_role: ["member", "moderator", "admin"],
       vote_target: ["question", "answer"],
     },
   },
