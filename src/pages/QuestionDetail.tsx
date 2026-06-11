@@ -262,6 +262,7 @@ const QuestionDetail = () => {
                       <Share2 className="h-3.5 w-3.5" />
                       Partager
                     </button>
+                    <ReportButton targetType="question" targetId={question.id} />
                   </div>
 
                   <CommentList
