@@ -83,43 +83,8 @@ const Index = () => {
   return (
     <Layout>
       <div className="flex gap-6">
-        <aside className="hidden lg:block w-52 shrink-0">
-          <div className="sticky top-20">
-            <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <Filter className="h-3 w-3" />
-              Tags populaires
-            </h3>
-            <div className="flex flex-col gap-0.5">
-              <button
-                onClick={() => setActiveTag(null)}
-                className={`rounded-md px-3 py-1.5 text-left text-sm font-medium transition-colors ${
-                  !activeTag
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
-              >
-                <MessageSquare className="inline h-3.5 w-3.5 mr-1.5" />
-                Toutes
-              </button>
-              {popularTags.map((tag) => (
-                <button
-                  key={tag.name}
-                  onClick={() => setActiveTag(activeTag === tag.name ? null : tag.name)}
-                  className={`rounded-md px-3 py-1.5 text-left text-sm font-mono transition-colors ${
-                    activeTag === tag.name
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <span className="text-muted-foreground mr-1">#</span>
-                  {tag.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-
         <div className="flex-1 min-w-0">
+
           <WelcomeBanner />
           <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
