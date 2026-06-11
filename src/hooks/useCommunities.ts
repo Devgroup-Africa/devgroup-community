@@ -59,15 +59,24 @@ export const useCommunityMembers = (communityId: string | undefined) =>
     queryKey: ["community-members", communityId],
     enabled: !!communityId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: members, error } = await supabase
         .from("community_members")
-        .select("*, profile:profiles(username,avatar,reputation)")
+        .select("*")
         .eq("community_id", communityId!)
         .order("joined_at", { ascending: true });
       if (error) throw error;
-      return (data || []) as MemberRow[];
+      const rows = (members || []) as Omit<MemberRow, "profile">[];
+      if (rows.length === 0) return [] as MemberRow[];
+      const ids = rows.map((r) => r.user_id);
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id,username,avatar,reputation")
+        .in("id", ids);
+      const byId = new Map((profs || []).map((p: any) => [p.id, p]));
+      return rows.map((r) => ({ ...r, profile: byId.get(r.user_id) || null })) as MemberRow[];
     },
   });
+
 
 export const useMyMemberships = () => {
   const { user } = useAuth();
