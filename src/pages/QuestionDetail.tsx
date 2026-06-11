@@ -371,11 +371,14 @@ const QuestionDetail = () => {
                             <span className="font-medium text-foreground">{answer.author_username}</span>
                           </Link>
                           <span>· {timeAgo(answer.created_at)}</span>
-                          {answer.accepted && (
-                            <span className="hidden sm:inline ml-auto rounded-sm bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                              Acceptée
-                            </span>
-                          )}
+                          <div className="ml-auto flex items-center gap-2">
+                            {answer.accepted && (
+                              <span className="hidden sm:inline rounded-sm bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                                Acceptée
+                              </span>
+                            )}
+                            <ReportButton targetType="answer" targetId={answer.id} />
+                          </div>
                         </div>
                         <CommentList
                           targetType="answer"
