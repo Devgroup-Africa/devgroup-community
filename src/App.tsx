@@ -44,6 +44,8 @@ const App = () => (
               <Route path="/users" element={<Users />} />
               <Route path="/badges" element={<Badges />} />
               <Route path="/community" element={<Community />} />
+              <Route path="/communities" element={<Communities />} />
+              <Route path="/communities/:slug" element={<CommunityDetail />} />
               <Route path="/user/:id" element={<UserProfile />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/content" element={<AdminContent />} />
