@@ -4,10 +4,10 @@ import Layout from "@/components/Layout";
 import {
   useCommunities,
   useMyMemberships,
-  useJoinCommunity,
   useLeaveCommunity,
   useCreateCommunity,
   slugify,
+  type Community,
 } from "@/hooks/useCommunities";
 import { useAuth } from "@/contexts/AuthContext";
 import { Users, Plus, Lock, Globe, Search, LogIn } from "lucide-react";
@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import JoinCommunityDialog from "@/components/JoinCommunityDialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -26,9 +27,9 @@ const Communities = () => {
   const navigate = useNavigate();
   const { data: all = [], isLoading } = useCommunities();
   const { data: myMems = [] } = useMyMemberships();
-  const join = useJoinCommunity();
   const leave = useLeaveCommunity();
   const create = useCreateCommunity();
+  const [joinTarget, setJoinTarget] = useState<Community | null>(null);
 
   const [tab, setTab] = useState<"all" | "mine">("all");
   const [search, setSearch] = useState("");
@@ -195,7 +196,7 @@ const Communities = () => {
                         </span>
                       ) : (
                         <button
-                          onClick={() => join.mutate(c.id)}
+                          onClick={() => setJoinTarget(c)}
                           className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
                         >
                           Rejoindre
@@ -276,6 +277,15 @@ const Communities = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {joinTarget && (
+          <JoinCommunityDialog
+            open={!!joinTarget}
+            onOpenChange={(v) => !v && setJoinTarget(null)}
+            communityId={joinTarget.id}
+            communityName={joinTarget.name}
+          />
+        )}
       </div>
     </Layout>
   );

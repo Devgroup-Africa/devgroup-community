@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-export type CommunityRole = "member" | "moderator" | "admin";
+export type CommunityRole = "member" | "moderator" | "admin" | "mentor" | "cadet";
+export type JoinRole = Extract<CommunityRole, "member" | "mentor" | "cadet">;
 
 export type Community = {
   id: string;
@@ -98,11 +99,15 @@ export const useJoinCommunity = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (communityId: string) => {
+    mutationFn: async (input: { communityId: string; role?: JoinRole }) => {
       if (!user) throw new Error("Connectez-vous");
       const { error } = await supabase
         .from("community_members")
-        .insert({ community_id: communityId, user_id: user.id, role: "member" });
+        .insert({
+          community_id: input.communityId,
+          user_id: user.id,
+          role: (input.role || "member") as any,
+        });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -110,6 +115,7 @@ export const useJoinCommunity = () => {
       qc.invalidateQueries({ queryKey: ["communities"] });
       qc.invalidateQueries({ queryKey: ["community-members"] });
       qc.invalidateQueries({ queryKey: ["community"] });
+      qc.invalidateQueries({ queryKey: ["questions"] });
       toast.success("Vous avez rejoint la communauté.");
     },
     onError: (e: any) => toast.error(e?.message || "Impossible de rejoindre."),
