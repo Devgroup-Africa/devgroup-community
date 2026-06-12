@@ -709,6 +709,7 @@ export type Database = {
           author_username: string | null
           body: string | null
           bookmarks: number | null
+          community_id: string | null
           created_at: string | null
           id: string | null
           post_type: string | null
@@ -724,6 +725,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -756,7 +764,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin" | "super_admin"
-      community_role: "member" | "moderator" | "admin"
+      community_role: "member" | "moderator" | "admin" | "mentor" | "cadet"
       vote_target: "question" | "answer"
     }
     CompositeTypes: {
@@ -886,7 +894,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin", "super_admin"],
-      community_role: ["member", "moderator", "admin"],
+      community_role: ["member", "moderator", "admin", "mentor", "cadet"],
       vote_target: ["question", "answer"],
     },
   },
