@@ -19,6 +19,7 @@ export interface QuestionRow {
   answers_count: number;
   tags: string[];
   post_type: PostType;
+  community_id: string | null;
 }
 
 export interface AnswerRow {
