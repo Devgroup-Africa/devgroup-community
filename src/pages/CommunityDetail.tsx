@@ -8,12 +8,17 @@ import {
   useLeaveCommunity,
   useUpdateMemberRole,
   useRemoveMember,
+  useMyCommunityInvitations,
+  useRespondToCommunityInvitation,
   type CommunityRole,
 } from "@/hooks/useCommunities";
 import { useQuestions } from "@/hooks/useData";
 import QuestionCard from "@/components/QuestionCard";
 import ReportButton from "@/components/ReportButton";
 import JoinCommunityDialog from "@/components/JoinCommunityDialog";
+import InviteCommunityDialog from "@/components/InviteCommunityDialog";
+import Seo from "@/components/Seo";
+import { getSiteUrl } from "@/lib/seo";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Users,
@@ -31,6 +36,9 @@ import {
   Clock,
   Flame,
   TrendingUp,
+  UserPlus,
+  Check,
+  X,
 } from "lucide-react";
 
 const roleLabel: Record<CommunityRole, string> = {
@@ -62,11 +70,14 @@ const CommunityDetail = () => {
   const leave = useLeaveCommunity();
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
+  const { data: invitations = [] } = useMyCommunityInvitations();
+  const respondToInvitation = useRespondToCommunityInvitation();
 
   const [tab, setTab] = useState<"feed" | "members">("feed");
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [page, setPage] = useState(1);
   const [joinOpen, setJoinOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const myMembership = useMemo(
     () => myMems.find((m) => m.community_id === community?.id),
@@ -75,6 +86,7 @@ const CommunityDetail = () => {
   const isMember = !!myMembership;
   const myRole = myMembership?.role;
   const isStaff = myRole === "admin" || myRole === "moderator";
+  const myInvitation = invitations.find((invitation) => invitation.community_id === community?.id);
 
   const posts = useMemo(
     () => allQuestions.filter((q) => q.community_id === community?.id),
@@ -106,14 +118,17 @@ const CommunityDetail = () => {
 
   if (!community) {
     return (
-      <Layout>
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">Communauté introuvable.</p>
-          <Link to="/communities" className="text-primary hover:underline text-sm mt-2 inline-block">
-            Retour aux communautés
-          </Link>
-        </div>
-      </Layout>
+      <>
+        <Seo title="Communauté introuvable" description="Cette communauté est introuvable." noIndex />
+        <Layout>
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">Communauté introuvable.</p>
+            <Link to="/communities" className="text-primary hover:underline text-sm mt-2 inline-block">
+              Retour aux communautés
+            </Link>
+          </div>
+        </Layout>
+      </>
     );
   }
 
@@ -129,7 +144,26 @@ const CommunityDetail = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <Seo
+        title={community.name}
+        description={community.description || `Découvrez et rejoignez la communauté ${community.name}.`}
+        path={`/communities/${community.slug}`}
+        image={community.banner_url || "/logo-vert.png"}
+        noIndex={community.is_private}
+        jsonLd={
+          community.is_private
+            ? undefined
+            : {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: community.name,
+                description: community.description || undefined,
+                url: `${getSiteUrl()}/communities/${community.slug}`,
+              }
+        }
+      />
+      <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="rounded-lg border border-border bg-card overflow-hidden mb-5">
           {community.banner_url && (
@@ -152,6 +186,15 @@ const CommunityDetail = () => {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {isStaff && (
+                <button
+                  onClick={() => setInviteOpen(true)}
+                  className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Inviter
+                </button>
+              )}
               {user ? (
                 isMember ? (
                   <>
@@ -189,6 +232,33 @@ const CommunityDetail = () => {
             </div>
           </div>
         </div>
+
+        {myInvitation && !isMember && (
+          <div className="mb-5 flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center">
+            <div className="flex-1">
+              <p className="text-sm font-semibold">Vous êtes invité à rejoindre cette communauté.</p>
+              <p className="text-xs text-muted-foreground">Rôle proposé : {roleLabel[myInvitation.role]}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => respondToInvitation.mutate({ invitationId: myInvitation.id, accept: false })}
+                disabled={respondToInvitation.isPending}
+                className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                Refuser
+              </button>
+              <button
+                onClick={() => respondToInvitation.mutate({ invitationId: myInvitation.id, accept: true })}
+                disabled={respondToInvitation.isPending}
+                className="flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Accepter
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="mb-4 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
@@ -365,8 +435,16 @@ const CommunityDetail = () => {
           communityId={community.id}
           communityName={community.name}
         />
+        <InviteCommunityDialog
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+          communityId={community.id}
+          communityName={community.name}
+          memberIds={members.map((member) => member.user_id)}
+        />
       </div>
-    </Layout>
+      </Layout>
+    </>
   );
 };
 

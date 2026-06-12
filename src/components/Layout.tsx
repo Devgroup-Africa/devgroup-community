@@ -83,7 +83,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Rechercher des questions..."
+              placeholder="Rechercher des publications..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-9 w-full rounded-md border border-border bg-muted pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
@@ -246,7 +246,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   <span className="font-mono text-sm font-bold text-foreground">DevGroup Community</span>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  La plateforme communautaire de questions-réponses dédiée aux développeurs du monde entier.
+                  Un espace ouvert pour partager des idées, poser des questions, découvrir des projets et créer des liens.
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Une initiative de{" "}
@@ -307,7 +307,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 © {new Date().getFullYear()} DevGroup Community. Tous droits réservés.
               </p>
               <p className="text-xs text-muted-foreground">
-                Construit pour les développeurs d'Afrique et d'ailleurs.
+                Imaginé pour une communauté curieuse, créative et engagée.
               </p>
             </div>
           </div>

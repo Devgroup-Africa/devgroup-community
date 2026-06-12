@@ -100,12 +100,18 @@ const Index = () => {
                 ) : typeFilter === "question" ? (
                   "Questions"
                 ) : (
-                  "Publications"
+                  "Partagez, échangez, progressez"
                 )}
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {filtered.length} {typeFilter === "news" ? "actualité" : typeFilter === "discussion" ? "discussion" : "publication"}{filtered.length > 1 ? "s" : ""}
-              </p>
+              {!searchFromUrl && !activeTag && typeFilter === "all" ? (
+                <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                  Découvrez les questions, idées, projets et actualités partagés par la communauté.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {filtered.length} {typeFilter === "news" ? "actualité" : typeFilter === "discussion" ? "discussion" : "publication"}{filtered.length > 1 ? "s" : ""}
+                </p>
+              )}
 
               <div className="mt-3 flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
                 {([

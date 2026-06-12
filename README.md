@@ -2,7 +2,7 @@
 
 ## About
 
-DevGroup Community is a developer Q&A platform where developers can ask questions, share knowledge, and help each other grow.
+DevGroup Community is an open community platform where members can ask questions, start discussions, share news and projects, and help each other grow.
 
 ## How can I edit this code?
 
@@ -55,3 +55,9 @@ This project is built with:
 ## How can I deploy this project?
 
 This project can be deployed to any static hosting service like Vercel, Netlify, or GitHub Pages.
+
+Set `VITE_SITE_URL` to the public production URL, then generate the sitemap before deployment:
+
+```sh
+npm run seo:sitemap
+```

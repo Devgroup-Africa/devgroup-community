@@ -24,6 +24,7 @@ import Community from "./pages/Community.tsx";
 import Communities from "./pages/Communities.tsx";
 import CommunityDetail from "./pages/CommunityDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import RouteSeo from "./components/RouteSeo.tsx";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <RouteSeo />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />

@@ -13,6 +13,8 @@ import FollowButton from "@/components/FollowButton";
 import { useFollowCounts } from "@/hooks/useFollow";
 import OnlineDot from "@/components/OnlineDot";
 import UserBadges from "@/components/UserBadges";
+import Seo from "@/components/Seo";
+import { getSiteUrl } from "@/lib/seo";
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -76,14 +78,17 @@ const UserProfile = () => {
 
   if (!profile) {
     return (
-      <Layout>
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">Utilisateur introuvable.</p>
-          <Link to="/users" className="text-primary hover:underline mt-2 inline-block">
-            ← Retour aux utilisateurs
-          </Link>
-        </div>
-      </Layout>
+      <>
+        <Seo title="Profil introuvable" description="Ce profil est introuvable." noIndex />
+        <Layout>
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">Utilisateur introuvable.</p>
+            <Link to="/users" className="text-primary hover:underline mt-2 inline-block">
+              ← Retour aux utilisateurs
+            </Link>
+          </div>
+        </Layout>
+      </>
     );
   }
 
@@ -116,7 +121,23 @@ const UserProfile = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <Seo
+        title={`${profile.username} — Profil`}
+        description={profile.bio || `Découvrez le profil et les contributions de ${profile.username} sur DevGroup Community.`}
+        path={`/user/${profile.id}`}
+        type="profile"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: profile.username,
+          description: profile.bio || undefined,
+          url: `${getSiteUrl()}/user/${profile.id}`,
+          homeLocation: profile.location || undefined,
+          sameAs: [(profile as any).github, (profile as any).linkedin, (profile as any).website].filter(Boolean),
+        }}
+      />
+      <Layout>
       <div className="max-w-4xl mx-auto">
         <Link
           to="/users"
@@ -371,7 +392,8 @@ const UserProfile = () => {
           )}
         </div>
       </div>
-    </Layout>
+      </Layout>
+    </>
   );
 };
 

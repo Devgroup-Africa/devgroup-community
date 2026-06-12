@@ -18,6 +18,8 @@ import MentionTextarea from "@/components/MentionTextarea";
 import PollBlock from "@/components/PollBlock";
 import { extractMentions, resolveMentions } from "@/lib/mentions";
 import { notify, notifyMany } from "@/lib/notify";
+import Seo from "@/components/Seo";
+import { getSiteUrl } from "@/lib/seo";
 
 const QuestionDetail = () => {
   const { id } = useParams();
@@ -65,14 +67,17 @@ const QuestionDetail = () => {
 
   if (!question) {
     return (
-      <Layout>
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">Question introuvable.</p>
-          <Link to="/" className="text-primary hover:underline mt-2 inline-block">
-            ← Retour aux questions
-          </Link>
-        </div>
-      </Layout>
+      <>
+        <Seo title="Publication introuvable" description="Cette publication est introuvable." noIndex />
+        <Layout>
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">Question introuvable.</p>
+            <Link to="/" className="text-primary hover:underline mt-2 inline-block">
+              ← Retour aux questions
+            </Link>
+          </div>
+        </Layout>
+      </>
     );
   }
 
@@ -90,6 +95,44 @@ const QuestionDetail = () => {
     .slice(0, 4);
 
   const isQuestionAuthor = user?.id === question.author_id;
+  const seoDescription = question.body.replace(/[#*_`>\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+  const questionUrl = `/question/${question.id}`;
+  const absoluteQuestionUrl = `${getSiteUrl()}${questionUrl}`;
+  const questionJsonLd =
+    question.post_type === "question"
+      ? {
+          "@context": "https://schema.org",
+          "@type": "QAPage",
+          mainEntity: {
+            "@type": "Question",
+            name: question.title,
+            text: question.body,
+            dateCreated: question.created_at,
+            author: { "@type": "Person", name: question.author_username },
+            answerCount: answers.length,
+            upvoteCount: question.votes,
+            url: absoluteQuestionUrl,
+            suggestedAnswer: answers.map((answer) => ({
+              "@type": "Answer",
+              text: answer.body,
+              dateCreated: answer.created_at,
+              upvoteCount: answer.votes,
+              url: absoluteQuestionUrl,
+              author: { "@type": "Person", name: answer.author_username },
+            })),
+          },
+        }
+      : {
+          "@context": "https://schema.org",
+          "@type": question.post_type === "news" ? "NewsArticle" : "DiscussionForumPosting",
+          headline: question.title,
+          articleBody: question.body,
+          datePublished: question.created_at,
+          author: { "@type": "Person", name: question.author_username },
+          commentCount: answers.length,
+          keywords: question.tags.join(", "),
+          url: absoluteQuestionUrl,
+        };
 
   const handleAcceptAnswer = async (answerId: string, currentlyAccepted: boolean, answerAuthorId: string) => {
     await supabase.from("answers").update({ accepted: false }).eq("question_id", question.id);
@@ -174,7 +217,15 @@ const QuestionDetail = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <Seo
+        title={question.title}
+        description={seoDescription || "Consultez cette publication sur DevGroup Community."}
+        path={questionUrl}
+        type="article"
+        jsonLd={questionJsonLd}
+      />
+      <Layout>
       <div className="max-w-5xl mx-auto" ref={contentRef}>
         <div className="flex gap-6">
           <div className="flex-1 min-w-0">
@@ -447,7 +498,8 @@ const QuestionDetail = () => {
           )}
         </div>
       </div>
-    </Layout>
+      </Layout>
+    </>
   );
 };
 

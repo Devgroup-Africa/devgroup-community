@@ -27,7 +27,7 @@ const Tags = () => {
           <div>
             <h1 className="text-2xl font-bold font-mono text-foreground">Tags</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {tags.length} tags — parcourez les sujets par technologie
+              {tags.length} tags — parcourez les publications par sujet
             </p>
           </div>
           <div className="relative">

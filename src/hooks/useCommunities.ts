@@ -3,8 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : "";
+
 export type CommunityRole = "member" | "moderator" | "admin" | "mentor" | "cadet";
 export type JoinRole = Extract<CommunityRole, "member" | "mentor" | "cadet">;
+export type CommunityInvitation = {
+  id: string;
+  community_id: string;
+  invited_user_id: string;
+  invited_by: string;
+  role: JoinRole;
+  created_at: string;
+};
 
 export type Community = {
   id: string;
@@ -73,7 +83,7 @@ export const useCommunityMembers = (communityId: string | undefined) =>
         .from("profiles")
         .select("id,username,avatar,reputation")
         .in("id", ids);
-      const byId = new Map((profs || []).map((p: any) => [p.id, p]));
+      const byId = new Map((profs || []).map((profile) => [profile.id, profile]));
       return rows.map((r) => ({ ...r, profile: byId.get(r.user_id) || null })) as MemberRow[];
     },
   });
@@ -95,6 +105,71 @@ export const useMyMemberships = () => {
   });
 };
 
+export const useMyCommunityInvitations = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["my-community-invitations", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("community_invitations")
+        .select("*")
+        .eq("invited_user_id", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as CommunityInvitation[];
+    },
+  });
+};
+
+export const useInviteToCommunity = () => {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { communityId: string; invitedUserId: string; role: JoinRole }) => {
+      if (!user) throw new Error("Connectez-vous");
+      const { error } = await supabase.from("community_invitations").insert({
+        community_id: input.communityId,
+        invited_user_id: input.invitedUserId,
+        invited_by: user.id,
+        role: input.role,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["community-invitations"] });
+      toast.success("Invitation envoyée.");
+    },
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error);
+      toast.error(message.includes("duplicate") ? "Cette personne est déjà invitée." : message || "Invitation impossible.");
+    },
+  });
+};
+
+export const useRespondToCommunityInvitation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { invitationId: string; accept: boolean }) => {
+      const { error } = input.accept
+        ? await supabase.rpc("accept_community_invitation", { _invitation_id: input.invitationId })
+        : await supabase.from("community_invitations").delete().eq("id", input.invitationId);
+      if (error) throw error;
+      return input.accept;
+    },
+    onSuccess: (accepted) => {
+      qc.invalidateQueries({ queryKey: ["my-community-invitations"] });
+      qc.invalidateQueries({ queryKey: ["my-memberships"] });
+      qc.invalidateQueries({ queryKey: ["communities"] });
+      qc.invalidateQueries({ queryKey: ["community"] });
+      qc.invalidateQueries({ queryKey: ["community-members"] });
+      qc.invalidateQueries({ queryKey: ["questions"] });
+      toast.success(accepted ? "Invitation acceptée." : "Invitation refusée.");
+    },
+    onError: (error: unknown) => toast.error(getErrorMessage(error) || "Action impossible."),
+  });
+};
+
 export const useJoinCommunity = () => {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -106,7 +181,7 @@ export const useJoinCommunity = () => {
         .insert({
           community_id: input.communityId,
           user_id: user.id,
-          role: (input.role || "member") as any,
+          role: input.role || "member",
         });
       if (error) throw error;
     },
@@ -118,7 +193,7 @@ export const useJoinCommunity = () => {
       qc.invalidateQueries({ queryKey: ["questions"] });
       toast.success("Vous avez rejoint la communauté.");
     },
-    onError: (e: any) => toast.error(e?.message || "Impossible de rejoindre."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error) || "Impossible de rejoindre."),
   });
 };
 
@@ -142,7 +217,7 @@ export const useLeaveCommunity = () => {
       qc.invalidateQueries({ queryKey: ["community"] });
       toast.success("Vous avez quitté la communauté.");
     },
-    onError: (e: any) => toast.error(e?.message || "Impossible de quitter."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error) || "Impossible de quitter."),
   });
 };
 
@@ -194,7 +269,7 @@ export const useUpdateMemberRole = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["community-members"] });
     },
-    onError: (e: any) => toast.error(e?.message || "Action impossible."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error) || "Action impossible."),
   });
 };
 
@@ -213,7 +288,7 @@ export const useRemoveMember = () => {
       qc.invalidateQueries({ queryKey: ["community-members"] });
       qc.invalidateQueries({ queryKey: ["communities"] });
     },
-    onError: (e: any) => toast.error(e?.message || "Action impossible."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error) || "Action impossible."),
   });
 };
 

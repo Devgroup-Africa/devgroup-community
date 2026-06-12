@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, MessageCircle, MessageSquare, AtSign, CheckCircle2, UserPlus, Award, Heart } from "lucide-react";
+import { Bell, CheckCheck, MessageCircle, MessageSquare, AtSign, CheckCircle2, UserPlus, Award, Heart, Users } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications, markAllNotificationsRead, markNotificationRead, type Notification } from "@/hooks/useNotifications";
@@ -14,10 +14,15 @@ const TYPE_META: Record<string, { icon: typeof Bell; label: (n: Notification) =>
   follow: { icon: UserPlus, label: (n) => `${n.actor_username ?? "Quelqu'un"} vous suit désormais` },
   vote: { icon: Heart, label: (n) => `${n.actor_username ?? "Quelqu'un"} a voté pour votre publication` },
   badge: { icon: Award, label: (n) => `Nouveau badge débloqué !` },
+  community_invitation: {
+    icon: Users,
+    label: (n) => `${n.actor_username ?? "Quelqu'un"} vous invite dans ${n.payload?.community_name ?? "une communauté"}`,
+  },
 };
 
 const targetUrl = (n: Notification): string => {
   if (n.type === "follow" && n.actor_id) return `/user/${n.actor_id}`;
+  if (n.type === "community_invitation" && n.payload?.community_slug) return `/communities/${n.payload.community_slug}`;
   if (n.question_id) return `/question/${n.question_id}`;
   if (n.target_type === "user" && n.target_id) return `/user/${n.target_id}`;
   return "/";

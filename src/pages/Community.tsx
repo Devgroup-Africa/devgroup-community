@@ -1,26 +1,26 @@
 import Layout from "@/components/Layout";
 import { Link } from "react-router-dom";
 import {
-  Users, Heart, Shield, Sparkles, MessageSquare, Code2,
+  Users, Heart, Shield, Sparkles, MessageSquare, Lightbulb,
   Globe2, HandHeart, AlertTriangle, BookOpen, Award,
 } from "lucide-react";
 
 const VALUES = [
   { icon: HandHeart, title: "Bienveillance", text: "On se parle comme on aimerait qu'on nous parle. Pas de condescendance, pas de moquerie." },
   { icon: Sparkles, title: "Curiosité", text: "Aucune question n'est bête. Chaque débutant d'aujourd'hui est un mentor de demain." },
-  { icon: Globe2, title: "Diversité", text: "Africains, Européens, juniors, seniors, autodidactes ou diplômés — tout le monde a sa place." },
-  { icon: Code2, title: "Excellence", text: "On valorise la qualité du code, la clarté des explications et la rigueur des réponses." },
+  { icon: Globe2, title: "Diversité", text: "Quels que soient votre parcours, votre expérience ou vos centres d'intérêt, vous avez votre place." },
+  { icon: Lightbulb, title: "Partage", text: "On valorise les idées utiles, les expériences sincères et les échanges qui font progresser la communauté." },
 ];
 
 const RULES = [
-  { ok: true, text: "Posez des questions claires avec contexte, code et ce que vous avez essayé." },
+  { ok: true, text: "Publiez des questions et discussions claires, avec le contexte utile pour bien vous comprendre." },
   { ok: true, text: "Répondez avec respect, même quand la question vous paraît évidente." },
-  { ok: true, text: "Citez vos sources, vos articles, vos repos. Donnez du crédit." },
-  { ok: true, text: "Utilisez le format Markdown et les blocs de code pour rester lisible." },
+  { ok: true, text: "Citez vos sources et donnez du crédit aux personnes à l'origine des contenus partagés." },
+  { ok: true, text: "Choisissez la bonne catégorie et présentez vos publications de manière lisible." },
   { ok: false, text: "Pas d'attaques personnelles, de propos racistes, sexistes, homophobes." },
   { ok: false, text: "Pas de spam, pas d'auto-promotion sans valeur ajoutée." },
-  { ok: false, text: "Pas de plagiat. Pas de partage de code propriétaire sans autorisation." },
-  { ok: false, text: "Pas de contenu illégal, de piratage, de cracks." },
+  { ok: false, text: "Pas de plagiat ni de partage de contenus privés ou protégés sans autorisation." },
+  { ok: false, text: "Pas de contenu illégal, trompeur ou dangereux." },
 ];
 
 const Community = () => {
@@ -36,8 +36,8 @@ const Community = () => {
             Bienvenue chez <span className="text-primary">DevGroup Community</span>
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Un espace pensé pour les développeurs qui veulent apprendre, partager et grandir ensemble — sans
-            jugement, sans gatekeeping, sans toxicité.
+            Un espace ouvert à toutes celles et ceux qui veulent apprendre, partager leurs idées, découvrir des projets
+            et grandir ensemble, dans le respect et la bienveillance.
           </p>
         </section>
 
@@ -100,8 +100,8 @@ const Community = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Link to="/ask" className="rounded-lg border border-border bg-card p-4 hover:border-primary/40 transition-colors">
               <MessageSquare className="h-5 w-5 text-primary mb-2" />
-              <h3 className="text-sm font-bold text-foreground mb-1">Posez vos questions</h3>
-              <p className="text-xs text-muted-foreground">Bloqué sur un bug ? Partagez-le, la communauté répond.</p>
+              <h3 className="text-sm font-bold text-foreground mb-1">Lancez un échange</h3>
+              <p className="text-xs text-muted-foreground">Posez une question, partagez une idée ou ouvrez une discussion.</p>
             </Link>
             <Link to="/" className="rounded-lg border border-border bg-card p-4 hover:border-primary/40 transition-colors">
               <BookOpen className="h-5 w-5 text-primary mb-2" />
@@ -139,7 +139,7 @@ const Community = () => {
             <a href="https://devgroup.ga" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               DevGroup Africa
             </a>
-            {" "}— construit pour les développeurs d'Afrique et d'ailleurs.
+            {" "}— une communauté ouverte aux idées, aux talents et aux expériences.
           </p>
         </section>
       </div>
