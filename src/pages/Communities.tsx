@@ -277,6 +277,15 @@ const Communities = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {joinTarget && (
+          <JoinCommunityDialog
+            open={!!joinTarget}
+            onOpenChange={(v) => !v && setJoinTarget(null)}
+            communityId={joinTarget.id}
+            communityName={joinTarget.name}
+          />
+        )}
       </div>
     </Layout>
   );
