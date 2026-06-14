@@ -773,6 +773,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_community_invite_link: {
+        Args: { _token: string }
+        Returns: string
+      }
       accept_community_invitation: {
         Args: { _invitation_id: string }
         Returns: undefined
@@ -781,6 +785,23 @@ export type Database = {
       community_role_of: {
         Args: { _community_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["community_role"]
+      }
+      create_community_invite_link: {
+        Args: { _community_id: string }
+        Returns: string
+      }
+      get_community_invite_preview: {
+        Args: { _token: string }
+        Returns: {
+          community_avatar: string | null
+          community_description: string | null
+          community_id: string
+          community_is_private: boolean
+          community_member_count: number
+          community_name: string
+          community_slug: string
+          inviter_username: string
+        }[]
       }
       has_role: {
         Args: {

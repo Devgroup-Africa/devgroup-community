@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : "";
 
@@ -27,6 +28,17 @@ export type Community = {
   owner_id: string;
   member_count: number;
   created_at: string;
+};
+
+export type CommunityInvitePreview = {
+  community_id: string;
+  community_slug: string;
+  community_name: string;
+  community_description: string | null;
+  community_avatar: string | null;
+  community_is_private: boolean;
+  community_member_count: number;
+  inviter_username: string;
 };
 
 export const useCommunities = () =>
@@ -144,6 +156,57 @@ export const useInviteToCommunity = () => {
       const message = getErrorMessage(error);
       toast.error(message.includes("duplicate") ? "Cette personne est déjà invitée." : message || "Invitation impossible.");
     },
+  });
+};
+
+export const useCreateCommunityInviteLink = () =>
+  useMutation({
+    mutationFn: async (communityId: string) => {
+      const { data, error } = await supabase.rpc("create_community_invite_link", {
+        _community_id: communityId,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onError: (error: unknown) =>
+      toast.error(getErrorMessage(error) || "Impossible de générer le lien d'invitation."),
+  });
+
+export const useCommunityInvitePreview = (token: string | undefined) =>
+  useQuery({
+    queryKey: ["community-invite-preview", token],
+    enabled: !!token,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_community_invite_preview", {
+        _token: token!,
+      });
+      if (error) throw error;
+      return (data?.[0] as CommunityInvitePreview | undefined) || null;
+    },
+  });
+
+export const useAcceptCommunityInviteLink = () => {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  return useMutation({
+    mutationFn: async (token: string) => {
+      const { data, error } = await supabase.rpc("accept_community_invite_link", {
+        _token: token,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (slug) => {
+      qc.invalidateQueries({ queryKey: ["my-memberships"] });
+      qc.invalidateQueries({ queryKey: ["communities"] });
+      qc.invalidateQueries({ queryKey: ["community-members"] });
+      qc.invalidateQueries({ queryKey: ["community"] });
+      qc.invalidateQueries({ queryKey: ["questions"] });
+      toast.success("Vous avez rejoint la communauté.");
+      navigate(`/communities/${slug}`);
+    },
+    onError: (error: unknown) =>
+      toast.error(getErrorMessage(error) || "Impossible de rejoindre la communauté."),
   });
 };
 
